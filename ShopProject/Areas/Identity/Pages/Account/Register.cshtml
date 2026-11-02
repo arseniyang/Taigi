@@ -1,0 +1,126 @@
+﻿@page
+@model RegisterModel
+
+@{
+    ViewData["Title"] = "Регистрация";
+}
+
+<div class="container" style="max-width: 480px; padding-top: 40px; padding-bottom: 60px;">
+    <div class="text-center mb-4">
+        <h1 class="display-6 fw-bold" style="letter-spacing: 2px;">РЕГИСТРАЦИЯ</h1>
+        <p class="text-muted small">Создайте аккаунт TAIGI</p>
+    </div>
+
+    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+            <label asp-for="Input.Email">Email</label>
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Пароль" />
+            <label asp-for="Input.Password">Пароль</label>
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Подтвердите пароль" />
+            <label asp-for="Input.ConfirmPassword">Подтверждение пароля</label>
+            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- ===== ЧЕКБОКСЫ СОГЛАСИЙ С HIDDEN-ПОЛЯМИ ===== -->
+        <!-- ============================================================ -->
+        <div class="register-consents mt-4 p-3" style="background-color: #f8f9fa; border-radius: 8px;">
+            <h5 class="mb-3" style="font-size: 15px; font-weight: 600;">Правовая информация</h5>
+            <p class="text-muted small mb-3">
+                Для регистрации необходимо принять следующие условия
+            </p>
+
+            <div class="form-group form-check mb-2">
+                <input class="form-check-input" type="checkbox" asp-for="Input.AgreeToOffer" id="AgreeToOffer" />
+                <input type="hidden" asp-for="Input.AgreeToOffer" value="false" />
+                <label class="form-check-label" for="AgreeToOffer" style="font-size: 14px;">
+                    Я принимаю условия <a href="/legal/oferta" target="_blank" class="text-dark">публичной оферты</a>
+                    <span class="text-danger">*</span>
+                </label>
+                <span asp-validation-for="Input.AgreeToOffer" class="text-danger d-block" style="font-size: 13px;"></span>
+            </div>
+
+            <div class="form-group form-check">
+                <input class="form-check-input" type="checkbox" asp-for="Input.AgreeToPrivacy" id="AgreeToPrivacy" />
+                <input type="hidden" asp-for="Input.AgreeToPrivacy" value="false" />
+                <label class="form-check-label" for="AgreeToPrivacy" style="font-size: 14px;">
+                    Я даю согласие на <a href="/legal/privacy" target="_blank" class="text-dark">обработку персональных данных</a>
+                    <span class="text-danger">*</span>
+                </label>
+                <span asp-validation-for="Input.AgreeToPrivacy" class="text-danger d-block" style="font-size: 13px;"></span>
+            </div>
+
+            <p class="text-muted small mt-3 mb-0">
+                <span class="text-danger">*</span> — поля, обязательные для заполнения
+            </p>
+        </div>
+
+        <button id="registerSubmit" type="submit" class="btn btn-dark w-100 py-2 rounded-pill fw-semibold mt-3" style="letter-spacing: 1px;">
+            ЗАРЕГИСТРИРОВАТЬСЯ
+        </button>
+
+        <div class="text-center mt-3">
+            <p class="text-muted small">
+                Уже есть аккаунт? <a asp-page="./Login" class="text-dark fw-semibold text-decoration-none">Войти</a>
+            </p>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+    .form-floating > .form-control {
+        border-radius: 0;
+        border: 1px solid #ddd;
+        padding: 12px 16px;
+        height: 56px;
+        font-size: 14px;
+    }
+
+        .form-floating > .form-control:focus {
+            border-color: #1a1a1a;
+            box-shadow: none;
+        }
+
+    .form-floating > label {
+        padding: 12px 16px;
+        font-size: 13px;
+        color: #999;
+    }
+
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        transition: background 0.2s;
+        padding: 14px;
+        font-size: 14px;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+        }
+
+    .form-check-input:checked {
+        background-color: #1a1a1a;
+        border-color: #1a1a1a;
+    }
+
+    .form-check-input:focus {
+        box-shadow: none;
+        border-color: #1a1a1a;
+    }
+</style>

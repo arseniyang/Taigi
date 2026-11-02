@@ -1,0 +1,602 @@
+﻿@model Order
+
+@{
+    ViewData["Title"] = $"Заказ #{Model.Id}";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="page-title">Заказ #@Model.Id</h2>
+        <span class="order-status-badge status-@Model.Status.ToLower()">@OrderStatus.GetRussianName(Model.Status)</span>
+    </div>
+
+    <div class="row g-4">
+        <!-- ===== ЛЕВАЯ КОЛОНКА: ИНФОРМАЦИЯ О ЗАКАЗЕ ===== -->
+        <div class="col-lg-8">
+            <!-- Дата и статус -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <span>Дата заказа</span>
+                    <span>@Model.OrderDate.ToString("dd MMMM yyyy, HH:mm")</span>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <span>Статус</span>
+                        <span class="order-status-badge status-@Model.Status.ToLower()">@OrderStatus.GetRussianName(Model.Status)</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.TrackingNumber))
+                    {
+                        <div class="info-row">
+                            <span>Трек-номер</span>
+                            <span class="tracking-number">@Model.TrackingNumber</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Способ получения -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <span>Способ получения</span>
+                </div>
+                <div class="info-card-body">
+                    @if (Model.DeliveryType == "pickup" && Model.PickupPoint != null)
+                    {
+                        <div class="info-row">
+                            <span>Тип</span>
+                            <span><strong>Самовывоз</strong></span>
+                        </div>
+                        <div class="info-row">
+                            <span>Пункт</span>
+                            <span>@Model.PickupPoint.Name</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Адрес</span>
+                            <span>@Model.PickupPoint.Address</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.PickupPoint.Metro))
+                        {
+                            <div class="info-row">
+                                <span>Метро</span>
+                                <span>@Model.PickupPoint.Metro</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.PickupPoint.WorkHours))
+                        {
+                            <div class="info-row">
+                                <span>Часы работы</span>
+                                <span>@Model.PickupPoint.WorkHours</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="info-row">
+                            <span>Тип</span>
+                            <span><strong>Доставка курьером</strong></span>
+                        </div>
+                        <div class="info-row">
+                            <span>Адрес</span>
+                            <span>@Model.ShippingAddress</span>
+                        </div>
+                        @if (Model.DeliveryDate.HasValue)
+                        {
+                            <div class="info-row">
+                                <span>Желаемая дата</span>
+                                <span>@Model.DeliveryDate.Value.ToString("dd MMMM yyyy")</span>
+                            </div>
+                        }
+                        @if (Model.DeliveryTimeFrom.HasValue && Model.DeliveryTimeTo.HasValue)
+                        {
+                            <div class="info-row">
+                                <span>Время доставки</span>
+                                <span>@Model.DeliveryTimeFrom.Value.ToString(@"hh\:mm") - @Model.DeliveryTimeTo.Value.ToString(@"hh\:mm")</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Получатель -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <span>Получатель</span>
+                </div>
+                <div class="info-card-body">
+                    <div class="info-row">
+                        <span>ФИО</span>
+                        <span>@(Model.ReceiverName ?? Model.User?.FirstName + " " + Model.User?.LastName)</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Телефон</span>
+                        <span>@(Model.ReceiverPhone ?? Model.PhoneNumber)</span>
+                    </div>
+                    <div class="info-row">
+                        <span>Email</span>
+                        <span>@Model.Email</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Comment))
+                    {
+                        <div class="info-row">
+                            <span>Комментарий</span>
+                            <span>@Model.Comment</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- История статусов -->
+            @if (Model.StatusHistory != null && Model.StatusHistory.Any())
+            {
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <span>История статусов</span>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="timeline">
+                            @foreach (var history in Model.StatusHistory.OrderByDescending(h => h.ChangedAt))
+                            {
+                                <div class="timeline-item">
+                                    <div class="timeline-time">@history.ChangedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                                    <div class="timeline-status">
+                                        <span class="order-status-badge status-@history.Status.ToLower()">@OrderStatus.GetRussianName(history.Status)</span>
+                                    </div>
+                                    <div class="timeline-note">@history.Note</div>
+                                    @if (history.ChangedByUser != null)
+                                    {
+                                        <div class="timeline-user">@history.ChangedByUser.FirstName @history.ChangedByUser.LastName</div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- ===== ПРАВАЯ КОЛОНКА: ТОВАРЫ И ИТОГО ===== -->
+        <div class="col-lg-4">
+            <div class="order-summary-card">
+                <h3 class="order-summary-title">Состав заказа</h3>
+
+                <div class="order-items">
+                    @foreach (var item in Model.OrderItems)
+                    {
+                        <div class="order-item">
+                            <div class="order-item-image">
+                                @if (!string.IsNullOrEmpty(item.ProductImageUrl))
+                                {
+                                    <img src="@item.ProductImageUrl" alt="@item.Product?.Name" />
+                                }
+                                else if (item.Product?.Images != null && item.Product.Images.Any())
+                                {
+                                    <img src="@item.Product.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl" alt="@item.Product.Name" />
+                                }
+                                else
+                                {
+                                    <div class="order-item-no-image">Нет фото</div>
+                                }
+                            </div>
+                            <div class="order-item-info">
+                                <div class="order-item-name">@(item.Product?.Name ?? $"Товар #{item.ProductId}")</div>
+                                <div class="order-item-size">Размер: @(item.Size ?? "OneSize")</div>
+                                <div class="order-item-quantity">@item.Quantity шт. × @item.PriceSnapshot.ToString("N0") ₽</div>
+                            </div>
+                            <div class="order-item-total">
+                                @item.TotalPrice.ToString("N0") ₽
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="order-summary-totals">
+                    <div class="summary-row">
+                        <span>Товары</span>
+                        <span>@Model.OrderItems.Sum(i => i.PriceSnapshot * i.Quantity).ToString("N0") ₽</span>
+                    </div>
+
+                    @if (Model.DiscountAmount.HasValue && Model.DiscountAmount > 0)
+                    {
+                        <div class="summary-row summary-discount">
+                            <span>Скидка</span>
+                            <span>-@Model.DiscountAmount.Value.ToString("N0") ₽</span>
+                        </div>
+                    }
+
+                    @if (Model.PromoCode != null)
+                    {
+                        <div class="summary-row summary-promo">
+                            <span>Промокод</span>
+                            <span class="promo-code-badge">@Model.PromoCode.Code</span>
+                        </div>
+                    }
+
+                    <div class="summary-row summary-total">
+                        <span>Итого</span>
+                        <span>@Model.TotalAmount.ToString("N0") ₽</span>
+                    </div>
+                </div>
+
+                <!-- ===== КНОПКА ОТМЕНЫ С КАСТОМНЫМ CONFIRM ===== -->
+                @if (Model.Status == "Pending" || Model.Status == "Processing")
+                {
+                    <form asp-action="Cancel" method="post" class="mt-3" id="cancelOrderForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="button" class="btn btn-outline-danger w-100 rounded-pill py-2"
+                                onclick="showConfirm('Отмена заказа', 'Вы уверены, что хотите отменить заказ №@Model.Id? Это действие нельзя будет отменить.', function() { document.getElementById('cancelOrderForm').submit(); })">
+                            Отменить заказ
+                        </button>
+                    </form>
+                }
+
+                <a asp-action="Index" class="btn btn-outline-secondary w-100 rounded-pill py-2 mt-2">
+                    ← Назад к списку заказов
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ===== ОБЩИЕ СТИЛИ ===== */
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin: 0;
+    }
+
+    /* ===== СТАТУСЫ ===== */
+    .order-status-badge {
+        display: inline-block;
+        padding: 4px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 50px;
+        white-space: nowrap;
+    }
+
+    .status-pending {
+        background: #fff3e0;
+        color: #e65100;
+    }
+
+    .status-processing {
+        background: #e3f2fd;
+        color: #0d47a1;
+    }
+
+    .status-shipped {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-delivered {
+        background: #e8f5e9;
+        color: #1b5e20;
+    }
+
+    .status-cancelled {
+        background: #fbe9e7;
+        color: #c62828;
+    }
+
+    /* ===== КАРТОЧКИ ===== */
+    .info-card {
+        background: #fff;
+        border: 1px solid #f0eeeb;
+        margin-bottom: 20px;
+        border-radius: 0;
+        overflow: hidden;
+    }
+
+    .info-card-header {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 20px;
+        background: #f8f7f5;
+        font-weight: 600;
+        font-size: 14px;
+        color: #1a1a1a;
+        border-bottom: 1px solid #f0eeeb;
+    }
+
+    .info-card-body {
+        padding: 16px 20px;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 14px;
+        border-bottom: 1px solid #f5f5f5;
+    }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row span:first-child {
+            color: #888;
+            font-weight: 500;
+        }
+
+        .info-row span:last-child {
+            color: #1a1a1a;
+            text-align: right;
+            max-width: 60%;
+        }
+
+    .tracking-number {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        color: #0d47a1;
+    }
+
+    /* ===== ИСТОРИЯ СТАТУСОВ ===== */
+    .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .timeline-item {
+        display: grid;
+        grid-template-columns: 140px auto 1fr;
+        gap: 12px;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f5f5f5;
+        font-size: 13px;
+    }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+    .timeline-time {
+        color: #999;
+        font-size: 12px;
+    }
+
+    .timeline-status {
+        justify-self: center;
+    }
+
+    .timeline-note {
+        color: #555;
+        font-size: 13px;
+    }
+
+    .timeline-user {
+        color: #999;
+        font-size: 11px;
+        grid-column: 3;
+        justify-self: end;
+    }
+
+    /* ===== ПРАВАЯ КОЛОНКА ===== */
+    .order-summary-card {
+        background: #f8f7f5;
+        padding: 20px 18px;
+        border: 1px solid #f0eeeb;
+        border-radius: 0;
+        position: sticky;
+        top: 24px;
+    }
+
+    .order-summary-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+    }
+
+    .order-items {
+        max-height: 320px;
+        overflow-y: auto;
+        margin-bottom: 16px;
+    }
+
+    .order-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+    .order-item-image {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+        background: #eee;
+        overflow: hidden;
+    }
+
+        .order-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .order-item-no-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 7px;
+        color: #999;
+        text-align: center;
+        background: #f5f5f5;
+        padding: 2px;
+    }
+
+    .order-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .order-item-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #1a1a1a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .order-item-size {
+        font-size: 11px;
+        color: #888;
+    }
+
+    .order-item-quantity {
+        font-size: 11px;
+        color: #888;
+    }
+
+    .order-item-total {
+        font-weight: 600;
+        font-size: 13px;
+        color: #1a1a1a;
+        white-space: nowrap;
+    }
+
+    /* ===== ИТОГИ ===== */
+    .order-summary-totals {
+        border-top: 1px solid #e0dedb;
+        padding-top: 14px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .summary-discount {
+        color: #2e7d32;
+        font-weight: 500;
+    }
+
+    .summary-promo .promo-code-badge {
+        background: #1a1a1a;
+        color: #fff;
+        padding: 1px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        border-radius: 0;
+    }
+
+    .summary-total {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1a1a1a;
+        border-top: 2px solid #e0dedb;
+        padding-top: 10px;
+        margin-top: 4px;
+    }
+
+    /* ===== КНОПКИ ===== */
+    .btn-outline-danger {
+        border-radius: 50px !important;
+        border-color: #dc3545;
+        color: #dc3545;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: #fff;
+        }
+
+    .btn-outline-secondary {
+        border-radius: 50px !important;
+        border-color: #ddd;
+        color: #555;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+        .btn-outline-secondary:hover {
+            background: #f0eeeb;
+            border-color: #ccc;
+        }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .page-title {
+            font-size: 20px;
+        }
+
+        .info-card-header {
+            font-size: 13px;
+            padding: 10px 14px;
+        }
+
+        .info-card-body {
+            padding: 12px 14px;
+        }
+
+        .info-row {
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+
+            .info-row span:last-child {
+                max-width: 100%;
+                text-align: left;
+                width: 100%;
+                padding-left: 0;
+            }
+
+        .timeline-item {
+            grid-template-columns: 1fr;
+            gap: 2px;
+            padding: 6px 0;
+        }
+
+        .timeline-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .timeline-status {
+            justify-self: start;
+        }
+
+        .timeline-note {
+            font-size: 12px;
+        }
+
+        .timeline-user {
+            grid-column: 1;
+            justify-self: start;
+            font-size: 10px;
+        }
+
+        .order-summary-card {
+            position: static;
+        }
+
+        .order-item-name {
+            font-size: 12px;
+        }
+
+        .order-item-total {
+            font-size: 12px;
+        }
+    }
+</style>

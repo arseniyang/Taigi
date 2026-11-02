@@ -1,0 +1,587 @@
+﻿@model ShopProject.Models.ProductEditViewModel
+
+@{
+    ViewData["Title"] = "Редактировать товар";
+}
+
+<div class="container py-4" style="max-width: 800px;">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Товары</a></li>
+            <li class="breadcrumb-item active text-dark fw-semibold">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <h2 class="page-title">Редактировать товар</h2>
+    <hr class="page-divider" />
+
+    <form asp-action="Edit" method="post" enctype="multipart/form-data" id="productForm">
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" name="ImageOrder" id="ImageOrder" value="" />
+        <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="Name" class="form-label">Название</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="form-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Article" class="form-label">Артикул</label>
+                    <input asp-for="Article" class="form-control" />
+                    <span asp-validation-for="Article" class="form-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Description" class="form-label">Описание</label>
+                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                    <span asp-validation-for="Description" class="form-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="CategoryId" class="form-label">Категория</label>
+                    <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId">
+                        <option value="">Выберите категорию</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="form-error"></span>
+                </div>
+
+                <div class="form-group form-check-group">
+                    <input asp-for="HasSizes" class="form-check-input" />
+                    <label asp-for="HasSizes" class="form-check-label">У товара есть размеры</label>
+                    <span class="form-hint">Если отключить, товар будет добавляться в корзину без выбора размера</span>
+                </div>
+
+                <div class="form-group mt-3">
+                    <a asp-controller="ProductSizes" asp-action="Index" asp-route-productId="@Model.Id" class="btn btn-outline-dark rounded-pill px-4">
+                        📏 Управление размерами
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label asp-for="Price" class="form-label">Цена</label>
+                    <input asp-for="Price" class="form-control" type="number" step="0.01" />
+                    <span asp-validation-for="Price" class="form-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="OldPrice" class="form-label">Старая цена (скидка)</label>
+                    <input asp-for="OldPrice" class="form-control" type="number" step="0.01" />
+                    <span asp-validation-for="OldPrice" class="form-error"></span>
+                    <span class="form-hint">Если указана, будет отображаться перечёркнутой</span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Color" class="form-label">Цвет</label>
+                    <input asp-for="Color" class="form-control" />
+                    <span asp-validation-for="Color" class="form-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Material" class="form-label">Материал</label>
+                    <input asp-for="Material" class="form-control" />
+                    <span asp-validation-for="Material" class="form-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Country" class="form-label">Страна производства</label>
+                    <input asp-for="Country" class="form-control" />
+                    <span asp-validation-for="Country" class="form-error"></span>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <h5 class="section-title">Изображения</h5>
+        <p class="form-hint">Перетащите изображения для изменения порядка. Первое изображение будет главным.</p>
+
+        @if (Model.ExistingImages.Any())
+        {
+            <div class="images-grid" id="imageGrid">
+                @foreach (var image in Model.ExistingImages.OrderBy(i => i.DisplayOrder))
+                {
+                    <div class="image-item" data-image-id="@image.Id" draggable="true">
+                        <img src="@image.ImageUrl" alt="Изображение" />
+                        <div class="image-item-actions">
+                            <input type="checkbox" name="ImagesToDelete" value="@image.Id" id="deleteImage_@image.Id" />
+                            <label for="deleteImage_@image.Id">Удалить</label>
+                            <span class="drag-handle" title="Перетащить">⠿</span>
+                        </div>
+                        <span class="image-order-badge">#@image.DisplayOrder</span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">Изображения не добавлены</p>
+        }
+
+        <div class="form-group mt-3">
+            <label class="form-label">Загрузить новые файлы</label>
+            <input type="file" name="NewImageFiles" class="form-control" multiple accept="image/*" />
+            <span class="form-hint">Можно выбрать несколько файлов (jpg, png, gif)</span>
+        </div>
+
+        <div class="form-group mt-3">
+            <label class="form-label">Или добавить URL-адреса</label>
+            <div id="url-container">
+                <div class="url-input-group">
+                    <input type="text" name="NewImageUrls" class="form-control" placeholder="https://example.com/image.jpg" />
+                </div>
+            </div>
+            <button type="button" class="btn-add-url" onclick="addUrlField()">+ Добавить ещё URL</button>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-dark rounded-pill px-5">Сохранить</button>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Отмена</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function addUrlField() {
+            const container = document.getElementById('url-container');
+            const newField = document.createElement('div');
+            newField.className = 'url-input-group mt-2';
+            newField.innerHTML = `
+                                <input type="text" name="NewImageUrls" class="form-control" placeholder="https://example.com/image.jpg" />
+                            `;
+            container.appendChild(newField);
+        }
+
+        // ================================================================
+        // DRAG-AND-DROP ДЛЯ ИЗОБРАЖЕНИЙ
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const grid = document.getElementById('imageGrid');
+            if (!grid) return;
+
+            let dragSrcElement = null;
+
+            function updateImageOrder() {
+                const items = grid.querySelectorAll('.image-item');
+                const order = [];
+                items.forEach(function(item) {
+                    const id = item.getAttribute('data-image-id');
+                    if (id) {
+                        order.push(id);
+                    }
+                });
+                document.getElementById('ImageOrder').value = order.join(',');
+            }
+
+            function updateOrderNumbers() {
+                const items = grid.querySelectorAll('.image-item');
+                items.forEach(function(item, index) {
+                    const badge = item.querySelector('.image-order-badge');
+                    if (badge) {
+                        badge.textContent = '#' + index;
+                    }
+                });
+            }
+
+            const items = grid.querySelectorAll('.image-item');
+            if (items.length === 0) return;
+
+            items.forEach(function(item) {
+                item.addEventListener('dragstart', function(e) {
+                    dragSrcElement = this;
+                    this.style.opacity = '0.4';
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', this.innerHTML);
+                });
+
+                item.addEventListener('dragend', function(e) {
+                    this.style.opacity = '1';
+                    document.querySelectorAll('.image-item').forEach(function(el) {
+                        el.classList.remove('drag-over');
+                    });
+                });
+
+                item.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+
+                item.addEventListener('dragenter', function(e) {
+                    e.preventDefault();
+                    this.classList.add('drag-over');
+                });
+
+                item.addEventListener('dragleave', function(e) {
+                    this.classList.remove('drag-over');
+                });
+
+                item.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.remove('drag-over');
+
+                    if (dragSrcElement === this) return;
+
+                    const dragSrcIndex = Array.from(grid.children).indexOf(dragSrcElement);
+                    const targetIndex = Array.from(grid.children).indexOf(this);
+
+                    if (dragSrcIndex < targetIndex) {
+                        this.parentNode.insertBefore(dragSrcElement, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(dragSrcElement, this);
+                    }
+
+                    updateOrderNumbers();
+                    updateImageOrder();
+                });
+            });
+
+            // Обновляем порядок при отправке формы
+            document.getElementById('productForm').addEventListener('submit', function() {
+                updateImageOrder();
+            });
+        });
+    </script>
+}
+
+<style>
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: 0.5px;
+    }
+
+    .page-divider,
+    .section-divider {
+        border-color: #e8e7e4;
+        margin: 12px 0 24px;
+    }
+
+    .section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 4px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #ddd;
+        border-radius: 0;
+        font-size: 14px;
+        background: #fff;
+        transition: border-color 0.2s ease;
+    }
+
+        .form-control:focus {
+            border-color: #1a1a1a;
+            outline: none;
+            box-shadow: none;
+        }
+
+        .form-control[type="file"] {
+            padding: 8px 12px;
+            border: 1px dashed #ddd;
+            background: #fafafa;
+            cursor: pointer;
+        }
+
+            .form-control[type="file"]:hover {
+                border-color: #1a1a1a;
+                background: #f5f5f5;
+            }
+
+    textarea.form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .form-error {
+        display: block;
+        font-size: 13px;
+        color: #dc3545;
+        margin-top: 2px;
+    }
+
+    .form-hint {
+        display: block;
+        font-size: 12px;
+        color: #999;
+        margin-top: 2px;
+    }
+
+    .form-check-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin-top: 8px;
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        accent-color: #1a1a1a;
+        margin-right: 8px;
+    }
+
+    .form-check-label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #1a1a1a;
+    }
+
+    .validation-summary {
+        padding: 12px 16px;
+        background: #fbe9e7;
+        color: #c62828;
+        font-size: 14px;
+        margin-bottom: 16px;
+        border-left: 3px solid #c62828;
+    }
+
+        .validation-summary ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+    .images-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .image-item {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid #f0eeeb;
+        padding: 8px;
+        background: #fff;
+        cursor: grab;
+        transition: border-color 0.2s;
+        user-select: none;
+    }
+
+        .image-item:hover {
+            border-color: #1a1a1a;
+        }
+
+        .image-item.drag-over {
+            border-color: #1a1a1a;
+            border-style: dashed;
+            background: #f5f5f5;
+        }
+
+        .image-item img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            background: #f5f5f5;
+            pointer-events: none;
+        }
+
+    .image-item-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: #999;
+    }
+
+        .image-item-actions input[type="checkbox"] {
+            accent-color: #1a1a1a;
+            width: 14px;
+            height: 14px;
+            margin: 0;
+        }
+
+        .image-item-actions label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+            .image-item-actions label:hover {
+                color: #dc3545;
+            }
+
+    .drag-handle {
+        font-size: 16px;
+        color: #ccc;
+        cursor: grab;
+        user-select: none;
+        padding: 0 2px;
+    }
+
+        .drag-handle:hover {
+            color: #1a1a1a;
+        }
+
+    .image-order-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: #1a1a1a;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: 50px;
+        min-width: 20px;
+        text-align: center;
+        line-height: 16px;
+    }
+
+    .url-input-group {
+        margin-top: 8px;
+    }
+
+        .url-input-group:first-child {
+            margin-top: 0;
+        }
+
+    .btn-add-url {
+        margin-top: 8px;
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 13px;
+        cursor: pointer;
+        padding: 4px 0;
+        transition: color 0.2s;
+    }
+
+        .btn-add-url:hover {
+            color: #1a1a1a;
+        }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #f0eeeb;
+    }
+
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 10px 32px;
+        transition: background 0.2s;
+        border-radius: 50px;
+        color: #fff;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    .btn-outline-secondary {
+        border: 1px solid #ddd;
+        color: #999;
+        background: transparent;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 10px 24px;
+        transition: all 0.2s;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+        .btn-outline-secondary:hover {
+            border-color: #1a1a1a;
+            color: #1a1a1a;
+        }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .form-actions {
+            flex-direction: column;
+        }
+
+            .form-actions .btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+
+        .page-title {
+            font-size: 20px;
+        }
+
+        .images-grid {
+            gap: 8px;
+        }
+
+        .image-item img {
+            width: 60px;
+            height: 60px;
+        }
+
+        .image-order-badge {
+            font-size: 9px;
+            min-width: 16px;
+            line-height: 14px;
+            top: -4px;
+            right: -4px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .page-title {
+            font-size: 18px;
+        }
+
+        .form-label {
+            font-size: 12px;
+        }
+
+        .form-control {
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+
+        .btn-dark,
+        .btn-outline-secondary {
+            font-size: 13px;
+            padding: 8px 16px;
+        }
+
+        .image-item img {
+            width: 50px;
+            height: 50px;
+        }
+    }
+</style>

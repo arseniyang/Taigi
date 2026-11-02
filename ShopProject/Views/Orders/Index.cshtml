@@ -1,0 +1,515 @@
+﻿@model IEnumerable<Order>
+
+@{
+    ViewData["Title"] = "Мои заказы";
+}
+
+<div class="container py-4">
+    <h2 class="page-title">Мои заказы</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-state-content">
+                <div class="empty-state-icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                </div>
+                <h3 class="empty-state-title">У вас пока нет заказов</h3>
+                <p class="empty-state-text">
+                    Самое время выбрать что-то особенное.<br />
+                    Откройте для себя коллекцию TAIGI.
+                </p>
+                <a asp-controller="Catalog" asp-action="Index" class="empty-state-btn">
+                    Перейти в каталог
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="orders-list">
+            @foreach (var order in Model)
+            {
+                <div class="order-card">
+                    <div class="order-card-header">
+                        <div class="order-card-id">
+                            Заказ #@order.Id
+                            <span class="order-status-badge status-@order.Status.ToLower()">@OrderStatus.GetRussianName(order.Status)</span>
+                        </div>
+                        <div class="order-card-date">
+                            @order.OrderDate.ToString("dd MMMM yyyy, HH:mm")
+                        </div>
+                    </div>
+
+                    <div class="order-card-body">
+                        <div class="order-card-items">
+                            @foreach (var item in order.OrderItems.Take(3))
+                            {
+                                <div class="order-card-item">
+                                    <div class="order-card-item-image">
+                                        @if (item.Product?.Images != null && item.Product.Images.Any())
+                                        {
+                                            <img src="@item.Product.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl" alt="@item.Product?.Name" />
+                                        }
+                                        else
+                                        {
+                                            <div class="no-image">Нет фото</div>
+                                        }
+                                    </div>
+                                    <div class="order-card-item-info">
+                                        <div class="order-card-item-name">@(item.Product?.Name ?? $"Товар #{item.ProductId}")</div>
+                                        <div class="order-card-item-meta">@item.Quantity шт. × @item.PriceSnapshot.ToString("N0") ₽</div>
+                                    </div>
+                                </div>
+                            }
+                            @if (order.OrderItems.Count > 3)
+                            {
+                                <div class="order-card-more">+ ещё @(order.OrderItems.Count - 3) товаров</div>
+                            }
+                        </div>
+
+                        <div class="order-card-summary">
+                            <div class="order-card-delivery">
+                                <span class="delivery-icon">@(order.DeliveryType == "pickup" ? "" : "")</span>
+                                @(order.DeliveryType == "pickup" ? "Самовывоз" : "Доставка")
+                            </div>
+                            <div class="order-card-total">
+                                @order.TotalAmount.ToString("N0") ₽
+                            </div>
+                            <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                                Подробнее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    /* ===== ОБЩИЕ СТИЛИ ===== */
+    .page-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 28px;
+    }
+
+    /* ===== КАРТОЧКИ ЗАКАЗОВ ===== */
+    .orders-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .order-card {
+        background: #fff;
+        border: 1px solid #f0eeeb;
+        border-radius: 0;
+        overflow: hidden;
+        transition: border-color 0.2s;
+    }
+
+        .order-card:hover {
+            border-color: #d0cecb;
+        }
+
+    .order-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: #f8f7f5;
+        border-bottom: 1px solid #f0eeeb;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .order-card-id {
+        font-weight: 600;
+        font-size: 15px;
+        color: #1a1a1a;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .order-card-date {
+        font-size: 13px;
+        color: #999;
+    }
+
+    /* ===== СТАТУСЫ ===== */
+    .order-status-badge {
+        display: inline-block;
+        padding: 2px 14px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 50px;
+        white-space: nowrap;
+    }
+
+    .status-pending {
+        background: #fff3e0;
+        color: #e65100;
+    }
+
+    .status-processing {
+        background: #e3f2fd;
+        color: #0d47a1;
+    }
+
+    .status-shipped {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-delivered {
+        background: #e8f5e9;
+        color: #1b5e20;
+    }
+
+    .status-cancelled {
+        background: #fbe9e7;
+        color: #c62828;
+    }
+
+    /* ===== ТЕЛО КАРТОЧКИ ===== */
+    .order-card-body {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .order-card-items {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        flex: 1;
+    }
+
+    .order-card-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-right: 12px;
+        border-right: 1px solid #f0eeeb;
+    }
+
+        .order-card-item:last-child {
+            border-right: none;
+        }
+
+    .order-card-item-image {
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        background: #f5f5f5;
+        overflow: hidden;
+    }
+
+        .order-card-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .order-card-item-image .no-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            color: #bbb;
+            text-align: center;
+            background: #f5f5f5;
+            padding: 2px;
+        }
+
+    .order-card-item-info {
+        min-width: 0;
+    }
+
+    .order-card-item-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #1a1a1a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+    }
+
+    .order-card-item-meta {
+        font-size: 11px;
+        color: #888;
+    }
+
+    .order-card-more {
+        font-size: 12px;
+        color: #999;
+        padding-left: 4px;
+    }
+
+    /* ===== ПРАВАЯ ЧАСТЬ ===== */
+    .order-card-summary {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+    }
+
+    .order-card-delivery {
+        font-size: 13px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .delivery-icon {
+        font-size: 16px;
+    }
+
+    .order-card-total {
+        font-weight: 700;
+        font-size: 18px;
+        color: #1a1a1a;
+        white-space: nowrap;
+    }
+
+    .btn-outline-dark {
+        border-radius: 50px !important;
+        border-color: #ddd;
+        color: #555;
+        font-weight: 500;
+        font-size: 13px;
+        padding: 4px 16px;
+        border: 1px solid #ddd;
+        background: transparent;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-outline-dark:hover {
+            background: #1a1a1a;
+            color: #fff;
+            border-color: #1a1a1a;
+        }
+
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        border-radius: 50px !important;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 10px 28px;
+        transition: background 0.2s;
+        color: #fff;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .page-title {
+            font-size: 20px;
+        }
+
+        .order-card-header {
+            padding: 10px 14px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .order-card-id {
+            font-size: 14px;
+        }
+
+        .order-card-date {
+            font-size: 12px;
+        }
+
+        .order-card-body {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 12px 14px;
+        }
+
+        .order-card-items {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .order-card-item {
+            border-right: none;
+            border-bottom: 1px solid #f5f5f5;
+            padding-bottom: 8px;
+            padding-right: 0;
+        }
+
+            .order-card-item:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+
+        .order-card-item-name {
+            max-width: 180px;
+        }
+
+        .order-card-summary {
+            justify-content: space-between;
+            padding-top: 10px;
+            border-top: 1px solid #f0eeeb;
+            flex-wrap: wrap;
+        }
+
+        .order-card-total {
+            font-size: 16px;
+        }
+
+        .btn-outline-dark {
+            font-size: 12px;
+            padding: 4px 12px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .order-card-item-name {
+            max-width: 120px;
+            font-size: 12px;
+        }
+
+        .order-card-summary {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+        }
+
+        .order-card-delivery {
+            font-size: 12px;
+        }
+
+        .order-card-total {
+            font-size: 15px;
+        }
+    }
+
+
+
+
+
+    .empty-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        padding: 20px;
+    }
+
+    .empty-state-content {
+        text-align: center;
+        max-width: 480px;
+    }
+
+    .empty-state-icon {
+        display: inline-block;
+        color: #ccc;
+        margin-bottom: 20px;
+        line-height: 1;
+    }
+
+        .empty-state-icon svg {
+            display: block;
+            stroke: #ccc;
+        }
+
+    .empty-state-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 10px;
+    }
+
+    .empty-state-text {
+        font-size: 15px;
+        color: #999;
+        line-height: 1.6;
+        margin-bottom: 28px;
+    }
+
+    .empty-state-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        padding: 12px 32px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: background 0.25s ease;
+        text-decoration: none;
+        border-radius: 50px;
+    }
+
+        .empty-state-btn:hover {
+            background: #333;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .empty-state-btn svg {
+            transition: transform 0.25s ease;
+        }
+
+        .empty-state-btn:hover svg {
+            transform: translateX(4px);
+        }
+
+    @@media (max-width: 576px) {
+        .empty-state {
+            min-height: 50vh;
+        }
+
+        .empty-state-title {
+            font-size: 20px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        .empty-state-btn {
+            font-size: 13px;
+            padding: 10px 24px;
+        }
+
+        .empty-state-icon svg {
+            width: 60px;
+            height: 60px;
+        }
+    }
+</style>

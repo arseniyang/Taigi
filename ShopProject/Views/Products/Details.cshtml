@@ -1,0 +1,437 @@
+﻿@model Product
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index" class="text-decoration-none text-muted">Товары</a></li>
+            <li class="breadcrumb-item active text-dark fw-semibold">@Model.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- Фото -->
+        <div class="col-md-5">
+            @if (Model.Images.Any())
+            {
+                var mainImage = Model.Images.OrderBy(i => i.DisplayOrder).First();
+                <div class="product-detail-image">
+                    <img id="mainImage" src="@mainImage.ImageUrl" alt="@Model.Name" />
+                </div>
+                @if (Model.Images.Count > 1)
+                {
+                    <div class="d-flex gap-2 mt-3 flex-wrap">
+                        @foreach (var image in Model.Images.OrderBy(i => i.DisplayOrder))
+                        {
+                            <img src="@image.ImageUrl"
+                                 alt="@Model.Name"
+                                 class="product-detail-thumb"
+                                 onclick="document.getElementById('mainImage').src = this.src;" />
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="product-detail-image-empty">
+                    <span class="text-muted">Изображения отсутствуют</span>
+                </div>
+            }
+        </div>
+
+        <!-- Информация -->
+        <div class="col-md-7">
+            <p class="text-muted small">@(Model.Article ?? "Артикул не указан")</p>
+            <h1 class="h2 fw-bold mb-2">@Model.Name</h1>
+
+            <div class="product-detail-price">
+                <span class="price-current">@Model.Price.ToString("N0") ₽</span>
+                @if (Model.OldPrice.HasValue && Model.OldPrice > Model.Price)
+                {
+                    <span class="price-old">@Model.OldPrice.Value.ToString("N0") ₽</span>
+                    <span class="price-discount">-@Model.DiscountPercent%</span>
+                }
+            </div>
+
+            <div class="product-detail-info">
+                <div class="info-row">
+                    <span class="info-label">Категория</span>
+                    <span class="info-value">@Model.Category?.Name</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Статус</span>
+                    <span class="info-value">
+                        @if (Model.IsActive)
+                        {
+                            <span class="status-badge status-active">Активен</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge status-inactive">Скрыт</span>
+                        }
+                    </span>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Color))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Цвет</span>
+                        <span class="info-value">@Model.Color</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Material))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Материал</span>
+                        <span class="info-value">@Model.Material</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Country))
+                {
+                    <div class="info-row">
+                        <span class="info-label">Страна</span>
+                        <span class="info-value">@Model.Country</span>
+                    </div>
+                }
+                <div class="info-row">
+                    <span class="info-label">На складе</span>
+                    <span class="info-value">@(Model.StockQuantity?.ToString() ?? "—")</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Дата добавления</span>
+                    <span class="info-value">@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                </div>
+            </div>
+
+            <!-- Размеры -->
+            @if (Model.Sizes.Any())
+            {
+                <div class="product-detail-sizes">
+                    <span class="sizes-label">Размеры</span>
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var size in Model.Sizes.OrderBy(s => s.Size))
+                        {
+                            if (size.IsAvailable)
+                            {
+                                <span class="size-badge size-available">@size.Size</span>
+                            }
+                            else
+                            {
+                                <span class="size-badge size-unavailable">@size.Size</span>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Описание -->
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <div class="product-detail-description">
+                    <h6 class="fw-semibold">Описание</h6>
+                    <p class="text-muted">@Model.Description</p>
+                </div>
+            }
+
+            <div class="d-flex gap-2 mt-4">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-dark rounded-pill px-4">Редактировать</a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger rounded-pill px-4">Удалить</a>
+                <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Назад</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ================================================================
+           TAIGI — ДЕТАЛИ ТОВАРА (АДМИНКА)
+           ================================================================ */
+
+    .product-detail-image {
+        background: #f5f5f5;
+        border: 1px solid #f0eeeb;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .product-detail-image img {
+            width: 100%;
+            max-height: 450px;
+            object-fit: contain;
+        }
+
+    .product-detail-image-empty {
+        background: #f5f5f5;
+        border: 1px solid #f0eeeb;
+        padding: 60px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+    }
+
+    .product-detail-thumb {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        border: 1px solid #f0eeeb;
+        cursor: pointer;
+        background: #f5f5f5;
+        transition: border-color 0.2s;
+    }
+
+        .product-detail-thumb:hover {
+            border-color: #1a1a1a;
+        }
+
+    .product-detail-price {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 12px 0 20px;
+    }
+
+    .price-current {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    .price-old {
+        font-size: 18px;
+        color: #999;
+        text-decoration: line-through;
+    }
+
+    .price-discount {
+        font-size: 13px;
+        font-weight: 600;
+        background: #1a1a1a;
+        color: #fff;
+        padding: 2px 12px;
+        border-radius: 50px;
+    }
+
+    .product-detail-info {
+        background: #f8f7f5;
+        padding: 16px 20px;
+        margin-bottom: 16px;
+    }
+
+    .info-row {
+        display: flex;
+        padding: 4px 0;
+        font-size: 14px;
+    }
+
+    .info-label {
+        width: 140px;
+        color: #999;
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+
+    .info-value {
+        color: #1a1a1a;
+    }
+
+    .product-detail-sizes {
+        margin: 16px 0;
+    }
+
+    .sizes-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .product-detail-description {
+        margin-top: 16px;
+    }
+
+        .product-detail-description h6 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 4px;
+        }
+
+        .product-detail-description p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+    .size-badge {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 4px 12px;
+        border-radius: 50px;
+        border: 1px solid #ddd;
+        min-width: 32px;
+        text-align: center;
+    }
+
+    .size-available {
+        background: #1a1a1a;
+        color: #fff;
+        border-color: #1a1a1a;
+    }
+
+    .size-unavailable {
+        background: #fff;
+        color: #999;
+        border-color: #ddd;
+    }
+
+    .status-badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 2px 14px;
+        border-radius: 50px;
+        display: inline-block;
+    }
+
+    .status-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-inactive {
+        background: #f5f5f5;
+        color: #999;
+    }
+
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 8px 24px;
+        transition: background 0.2s;
+        border-radius: 50px;
+        color: #fff;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    .btn-outline-danger {
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        background: transparent;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 8px 24px;
+        transition: all 0.2s;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: #fff;
+        }
+
+    .btn-outline-secondary {
+        border: 1px solid #ddd;
+        color: #999;
+        background: transparent;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 8px 24px;
+        transition: all 0.2s;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-outline-secondary:hover {
+            border-color: #1a1a1a;
+            color: #1a1a1a;
+            background: transparent;
+        }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .price-current {
+            font-size: 22px;
+        }
+
+        .info-label {
+            width: 100px;
+            font-size: 13px;
+        }
+
+        .info-value {
+            font-size: 13px;
+        }
+
+        .product-detail-image img {
+            max-height: 300px;
+        }
+
+        .product-detail-thumb {
+            width: 50px;
+            height: 50px;
+        }
+
+        .btn-dark,
+        .btn-outline-danger,
+        .btn-outline-secondary {
+            font-size: 12px;
+            padding: 6px 16px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .price-current {
+            font-size: 18px;
+        }
+
+        .info-label {
+            width: 80px;
+            font-size: 12px;
+        }
+
+        .info-value {
+            font-size: 12px;
+        }
+
+        .product-detail-info {
+            padding: 12px 16px;
+        }
+
+        .product-detail-image img {
+            max-height: 220px;
+        }
+
+        .product-detail-thumb {
+            width: 40px;
+            height: 40px;
+        }
+
+        .btn-dark,
+        .btn-outline-danger,
+        .btn-outline-secondary {
+            font-size: 11px;
+            padding: 5px 12px;
+        }
+    }
+</style>

@@ -1,0 +1,32 @@
+﻿@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Подтверждение регистрации";
+}
+
+<div class="container py-5">
+    @if (Model.DisplayConfirmAccountLink)
+    {
+        <div class="mt-4 p-3 bg-light border">
+            <p class="mb-2"><strong>Ссылка для подтверждения (только для разработки):</strong></p>
+            <a href="@Model.EmailConfirmationUrl" class="btn btn-sm btn-dark rounded-pill px-4">
+                Подтвердить email
+            </a>
+        </div>
+    }
+    <div class="text-center">
+        <h2 class="mb-3">Подтверждение email</h2>
+        <p class="text-muted">
+            На ваш email <strong>@Model.Email</strong> отправлено письмо с ссылкой для подтверждения.
+        </p>
+        <p class="text-muted">
+            Пожалуйста, перейдите по ссылке в письме, чтобы завершить регистрацию.
+        </p>
+        <p class="text-muted small mt-4">
+            Если письмо не пришло, проверьте папку "Спам" или запросите повторную отправку.
+        </p>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-dark rounded-pill px-5 mt-3">
+            На главную
+        </a>
+    </div>
+</div>

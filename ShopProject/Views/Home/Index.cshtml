@@ -1,0 +1,171 @@
+﻿@{
+    ViewData["Title"] = "TAIGI";
+    var newProducts = ViewBag.NewProducts as List<Product> ?? new List<Product>();
+    var hitProducts = ViewBag.HitProducts as List<Product> ?? new List<Product>();
+}
+
+<!-- ================================================================ -->
+<!-- ===== TOP МЕНЮ — СЛОГАНЫ ===== -->
+<!-- ================================================================ -->
+<div class="taigi-top-menu">
+    <div class="container">
+        <div class="d-flex justify-content-center gap-4 py-2 flex-wrap">
+          
+            <span class="taigi-top-slogan">СИБИРСКИЙ ХАРАКТЕР</span>
+            <span class="taigi-top-divider">|</span>
+            <span class="taigi-top-slogan">СВОБОДА ДВИЖЕНИЙ</span>
+            <span class="taigi-top-divider">|</span>
+            <span class="taigi-top-slogan">ЭСТЕТИКА ПРИРОДЫ</span>
+            <span class="taigi-top-divider">|</span>
+            <span class="taigi-top-slogan">УЛИЧНЫЙ СТИЛЬ</span>
+        </div>
+    </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- БАННЕР (HERO) — минималистичный                                   -->
+<!-- ================================================================ -->
+<section class="taigi-hero">
+    <div class="taigi-hero-bg">
+        <img id="heroImage" src="/images/hero-bg.jpg" alt="TAIGI" />
+        <div class="taigi-hero-bg-overlay"></div>
+    </div>
+    <div class="taigi-hero-wrapper">
+        <div class="taigi-hero-content">
+            <span class="taigi-hero-badge">ВЕСНА–ЛЕТО 2026</span>
+            <h1 class="taigi-hero-title">
+                Новая <span>коллекция</span>
+            </h1>
+            <p class="taigi-hero-text">
+                Стиль, комфорт и характер. Одежда для тех, кто ценит свободу.
+            </p>
+            <a asp-controller="Catalog" asp-action="Index" class="taigi-hero-btn">
+                Смотреть коллекцию
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- НОВИНКИ                                                          -->
+<!-- ================================================================ -->
+<section class="taigi-products py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="taigi-section-title">НОВИНКИ</h2>
+            <a asp-controller="Catalog" asp-action="Index" class="taigi-link-more">ВСЕ НОВИНКИ →</a>
+        </div>
+        @if (newProducts.Any())
+        {
+            <div class="row g-3">
+                @foreach (var product in newProducts.Take(4))
+                {
+                    <div class="col-6 col-md-3">
+                        <div class="taigi-product-card">
+                            @if (product.Images.Any())
+                            {
+                                <img src="@product.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl" alt="@product.Name" />
+                            }
+                            else
+                            {
+                                <div class="taigi-product-card-noimg">Нет фото</div>
+                            }
+                            <div class="taigi-product-card-body">
+                                <p class="taigi-product-card-name">@product.Name.ToUpper()</p>
+                                <p class="taigi-product-card-price">@product.Price.ToString("N0") ₽</p>
+                                @if (product.CreatedAt > DateTime.Now.AddDays(-30))
+                                {
+                                    <span class="taigi-product-badge">NEW</span>
+                                }
+                                <a asp-controller="Catalog" asp-action="Details" asp-route-id="@product.Id" class="taigi-product-link">ПОДРОБНЕЕ</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted text-center py-4">Новинок пока нет</p>
+        }
+    </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- ХИТЫ                                                            -->
+<!-- ================================================================ -->
+<section class="taigi-products py-5 bg-light">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="taigi-section-title">ХИТЫ</h2>
+            <a asp-controller="Catalog" asp-action="Index" class="taigi-link-more">ВСЕ ХИТЫ →</a>
+        </div>
+        @if (hitProducts.Any())
+        {
+            <div class="row g-3">
+                @foreach (var product in hitProducts.Take(4))
+                {
+                    <div class="col-6 col-md-3">
+                        <div class="taigi-product-card">
+                            @if (product.Images.Any())
+                            {
+                                <img src="@product.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl" alt="@product.Name" />
+                            }
+                            else
+                            {
+                                <div class="taigi-product-card-noimg">Нет фото</div>
+                            }
+                            <div class="taigi-product-card-body">
+                                <p class="taigi-product-card-name">@product.Name.ToUpper()</p>
+                                <p class="taigi-product-card-price">@product.Price.ToString("N0") ₽</p>
+                                <a asp-controller="Catalog" asp-action="Details" asp-route-id="@product.Id" class="taigi-product-link">ПОДРОБНЕЕ</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-muted text-center py-4">Хитов пока нет</p>
+        }
+    </div>
+</section>
+
+<!-- ================================================================ -->
+<!-- ПРЕИМУЩЕСТВА (минималистично)                                    -->
+<!-- ================================================================ -->
+<section class="taigi-features py-4">
+    <div class="container">
+        <div class="row text-center g-3">
+            <div class="col-6 col-md-3">
+                <div class="taigi-feature">
+                    <span class="taigi-feature-icon">●</span>
+                    <h6>Натуральные материалы</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="taigi-feature">
+                    <span class="taigi-feature-icon">●</span>
+                    <h6>Сделано в Сибири</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="taigi-feature">
+                    <span class="taigi-feature-icon">●</span>
+                    <h6>Стиль</h6>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="taigi-feature">
+                    <span class="taigi-feature-icon">●</span>
+                    <h6>Экологичность</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

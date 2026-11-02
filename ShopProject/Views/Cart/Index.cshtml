@@ -1,0 +1,733 @@
+﻿@model Cart
+@{
+    ViewData["Title"] = "Корзина";
+    var total = Model?.CartItems?.Sum(ci => ci.Product.Price * ci.Quantity) ?? 0;
+    var isGuest = !User.Identity.IsAuthenticated;
+    var totalItems = Model?.CartItems?.Sum(ci => ci.Quantity) ?? 0;
+
+    // ===== ПРОВЕРКА ДОСТУПНОСТИ С УЧЁТОМ РАЗМЕРОВ =====
+    var hasUnavailableItems = Model?.CartItems?.Any(ci =>
+        !ci.Product.IsActive ||
+        (ci.Product.Sizes?.FirstOrDefault(s => s.Size == ci.Size)?.StockQuantity ?? 0) <= 0 ||
+        (ci.Product.Sizes?.FirstOrDefault(s => s.Size == ci.Size)?.IsAvailable ?? false) == false
+    ) ?? false;
+}
+
+<div class="container py-4">
+    <h2 class="cart-title">Корзина</h2>
+
+    <!-- ===== КОНТЕЙНЕР ДЛЯ УВЕДОМЛЕНИЙ ===== -->
+    <div id="cartNotification"></div>
+
+    @if (Model == null || !Model.CartItems.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-state-content">
+                <div class="empty-state-icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                </div>
+                <h3 class="empty-state-title">Ваша корзина пуста</h3>
+                <p class="empty-state-text">
+                    Похоже, вы ещё ничего не добавили.<br />
+                    Самое время выбрать что-то особенное.
+                </p>
+                <a asp-controller="Catalog" asp-action="Index" class="empty-state-btn">
+                    Перейти в каталог
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <!-- ===== ЛЕВАЯ КОЛОНКА: ТОВАРЫ ===== -->
+            <div class="col-lg-8" id="cartItemsContainer">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <span class="cart-count" id="cartItemsCount">@Model.CartItems.Sum(ci => ci.Quantity) шт.</span>
+                    @if (isGuest)
+                    {
+                        <span class="text-muted small">Для сохранения корзины <a asp-area="Identity" asp-page="/Account/Login" class="text-decoration-none fw-semibold">войдите</a></span>
+                    }
+                </div>
+
+                @foreach (var item in Model.CartItems)
+                {
+                    // === ВЫЧИСЛЯЕМ ДОСТУПНОСТЬ С УЧЁТОМ РАЗМЕРА ===
+                    var product = item.Product;
+                    var size = product.Sizes?.FirstOrDefault(s => s.Size == item.Size);
+                    var isAvailable = product.IsActive && (size != null && size.IsAvailable && size.StockQuantity > 0);
+
+                    var image = product.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+                    var sizeDisplay = !string.IsNullOrEmpty(item.Size) && item.Size != "OneSize" ? $" • {item.Size}" : "";
+                    var itemId = isGuest ? item.ProductId : item.Id;
+                    var elementId = item.ProductId + "-" + (item.Size ?? "OneSize");
+
+                    <div class="cart-item @(!isAvailable ? "cart-item-unavailable" : "")" id="cart-item-@elementId" data-product-id="@item.ProductId" data-size="@(item.Size ?? "OneSize")">
+                        <div class="row align-items-center">
+                            <div class="col-3 col-md-2">
+                                @if (image != null)
+                                {
+                                    <img src="@image.ImageUrl" class="cart-item-img" alt="@product.Name" />
+                                }
+                                else
+                                {
+                                    <div class="cart-item-img-placeholder"><span class="text-muted small">Нет фото</span></div>
+                                }
+                            </div>
+
+                            <div class="col-6 col-md-5">
+                                <div class="cart-item-info">
+                                    <h5 class="cart-item-name">
+                                        @if (isAvailable)
+                                        {
+                                            <a asp-controller="Catalog" asp-action="Details" asp-route-id="@item.ProductId">@product.Name</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted text-decoration-line-through">@product.Name</span>
+                                        }
+                                    </h5>
+                                    <p class="cart-item-meta">@product.Article <span class="text-muted">@sizeDisplay</span></p>
+                                    <p class="cart-item-price">@product.Price.ToString("N0") ₽</p>
+                                    @if (!isAvailable)
+                                    {
+                                        <span class="badge bg-danger mt-1">Товар временно недоступен</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="col-3 col-md-5">
+                                <div class="d-flex align-items-center justify-content-end gap-3">
+                                    <div class="cart-qty-wrapper">
+                                        <!-- Кнопки +/− БЛОКИРУЮТСЯ, если недоступен -->
+                                        <button type="button" class="cart-qty-btn" onclick="decrease(@item.ProductId, '@(item.Size ?? "OneSize")')" @(!isAvailable ? "disabled" : "")>−</button>
+                                        <span class="cart-qty-number" id="qty-@elementId">@item.Quantity</span>
+                                        <button type="button" class="cart-qty-btn" onclick="increase(@item.ProductId, '@(item.Size ?? "OneSize")')" @(!isAvailable ? "disabled" : "")>+</button>
+                                    </div>
+                                    <span class="cart-item-subtotal" id="subtotal-@elementId">@((product.Price * item.Quantity).ToString("N0")) ₽</span>
+                                    <!-- КНОПКА УДАЛЕНИЯ ВСЕГДА АКТИВНА -->
+                                    <button type="button" class="cart-remove-btn" onclick="removeItem(@item.ProductId, '@(item.Size ?? "OneSize")')" title="Удалить">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- ===== ПРАВАЯ КОЛОНКА: ИТОГИ ===== -->
+            <div class="col-lg-4">
+                <div class="cart-summary" id="cartSummary">
+                    <h5 class="cart-summary-title">Итог заказа</h5>
+
+                    <div class="cart-summary-row">
+                        <span>Товары (<span id="cartCount">@Model.CartItems.Sum(ci => ci.Quantity)</span> шт.)</span>
+                        <span id="cartSubtotal">@total.ToString("N0") ₽</span>
+                    </div>
+                    <div class="cart-summary-row">
+                        <span>Доставка</span>
+                        <span class="text-success">Бесплатно</span>
+                    </div>
+
+                    <hr class="cart-divider" />
+
+                    <!-- ===== ПРОМОКОД ===== -->
+                    @if (!string.IsNullOrEmpty(Context.Session.GetString("PromoCode")))
+                    {
+                        var promoCode = Context.Session.GetString("PromoCode");
+                        var discount = Context.Session.GetInt32("PromoDiscount") ?? 0;
+                        var discountAmount = total * discount / 100;
+                        var finalTotal = total - discountAmount;
+
+                        <div class="cart-promo-applied" id="promoAppliedBlock">
+                            <span>Промокод <strong>@promoCode</strong> <span class="text-muted small">(@discount%)</span></span>
+                            <button type="button" class="cart-promo-remove" id="removePromoBtn">✕</button>
+                        </div>
+
+                        <div class="cart-summary-row">
+                            <span>Скидка</span>
+                            <span class="text-danger" id="discountAmount">-@discountAmount.ToString("N0") ₽</span>
+                        </div>
+
+                        <hr class="cart-divider" />
+
+                        <div class="cart-summary-total">
+                            <span>Итого со скидкой</span>
+                            <span class="fw-bold text-success" id="cartFinalTotal">@finalTotal.ToString("N0") ₽</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="cart-promo" id="promoFormBlock">
+                            <div class="cart-promo-input-group">
+                                <input type="text" class="cart-promo-input" placeholder="Промокод" id="promoCodeInput" autocomplete="off" />
+                                <button type="button" class="cart-promo-btn" id="applyPromoBtn">Применить</button>
+                            </div>
+                        </div>
+
+                        <hr class="cart-divider" />
+
+                        <div class="cart-summary-total">
+                            <span>Итого</span>
+                            <span class="fw-bold" id="cartTotal">@total.ToString("N0") ₽</span>
+                        </div>
+                    }
+
+                    <!-- ===== КНОПКА ОФОРМЛЕНИЯ ===== -->
+                    @if (isGuest)
+                    {
+                        <div class="cart-guest-block">
+                            <p class="cart-guest-text">
+                                Для оформления заказа необходимо
+                                <a asp-area="Identity" asp-page="/Account/Login" class="cart-guest-link">войти</a>
+                                или
+                                <a asp-area="Identity" asp-page="/Account/Register" class="cart-guest-link">зарегистрироваться</a>.
+                            </p>
+                            <button class="btn btn-secondary btn-lg w-100 mt-2" disabled style="border-radius:0;">
+                                Оформить заказ
+                            </button>
+                        </div>
+                    }
+                    else if (hasUnavailableItems)
+                    {
+                        <div class="taigi-alert taigi-alert-error mt-3 mb-2" role="alert" style="cursor: default;">
+                            <span class="taigi-alert-icon">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </span>
+                            <span class="taigi-alert-text">
+                                <strong>В корзине есть недоступные товары. Удалите их, чтобы оформить заказ.</strong>
+                            </span>
+                        </div>
+                        <button class="btn btn-secondary btn-lg w-100 mt-2" disabled style="border-radius:0;">
+                            Оформить заказ
+                        </button>
+                    }
+                    else
+                    {
+                        <a asp-controller="Orders" asp-action="Checkout" class="cart-checkout-btn" style="border-radius:0;">
+                            Оформить заказ →
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+
+
+
+<style>
+    .cart-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 28px;
+        letter-spacing: 1px;
+    }
+
+    .cart-count {
+        font-size: 14px;
+        color: #999;
+        font-weight: 500;
+    }
+
+    .cart-item {
+        background: #fff;
+        padding: 16px 0;
+        border-bottom: 1px solid #f0eeeb;
+    }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+    .cart-item-unavailable {
+        opacity: 0.6;
+    }
+
+        .cart-item-unavailable .cart-item-name {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+    .cart-item-img {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        background: #f5f5f5;
+    }
+
+    .cart-item-img-placeholder {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        background: #f5f5f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cart-item-info {
+        padding: 0 12px;
+    }
+
+    .cart-item-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 2px;
+    }
+
+        .cart-item-name a {
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+            .cart-item-name a:hover {
+                color: #1a1a1a;
+            }
+
+    .cart-item-meta {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 4px;
+    }
+
+    .cart-item-price {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    .cart-qty-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .cart-qty-btn {
+        width: 30px;
+        height: 30px;
+        border: 1px solid #ddd;
+        background: #fff;
+        color: #1a1a1a;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        padding: 0;
+    }
+
+        .cart-qty-btn:hover {
+            border-color: #1a1a1a;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .cart-qty-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+    .cart-qty-number {
+        min-width: 28px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .cart-item-subtotal {
+        font-weight: 700;
+        font-size: 16px;
+        min-width: 80px;
+        text-align: right;
+    }
+
+    .cart-remove-btn {
+        background: none;
+        border: none;
+        color: #ccc;
+        font-size: 16px;
+        transition: color 0.2s ease;
+        cursor: pointer;
+        padding: 4px;
+    }
+
+        .cart-remove-btn:hover {
+            color: #dc3545;
+        }
+
+    .cart-summary {
+        background: #f8f7f5;
+        padding: 28px 24px;
+        border: 1px solid #e8e7e4;
+    }
+
+    .cart-summary-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+    }
+
+    .cart-summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .cart-divider {
+        border-color: #e0ddd8;
+        margin: 14px 0;
+    }
+
+    .cart-summary-total {
+        display: flex;
+        justify-content: space-between;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    /* ================================================================ */
+    /* ПРОМОКОД — УГЛОВАТЫЙ СТИЛЬ                                      */
+    /* ================================================================ */
+
+    .cart-promo-input-group {
+        display: flex;
+        border: 1px solid #e0dedb;
+        background: #fff;
+    }
+
+    .cart-promo-input {
+        flex: 1;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 0;
+        font-size: 13px;
+        background: transparent;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+        .cart-promo-input:focus {
+            outline: none;
+        }
+
+    .cart-promo-btn {
+        padding: 10px 20px;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 0;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        white-space: nowrap;
+    }
+
+        .cart-promo-btn:hover {
+            background: #333;
+        }
+
+    .cart-promo-error {
+        color: #c62828;
+        font-size: 13px;
+        margin-top: 8px;
+    }
+
+    .cart-promo-success {
+        color: #2e7d32;
+        font-size: 13px;
+        margin-top: 8px;
+    }
+
+    .cart-promo-applied {
+        border-radius: 0px;
+        background: #f5f86f6;
+        padding: 10px 14px;
+        border-left: 2px solid #2d7d46;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: #2e7d32;
+        margin-bottom: 8px;
+    }
+
+    .cart-promo-remove {
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 0 4px;
+    }
+
+        .cart-promo-remove:hover {
+            color: #c62828;
+        }
+
+    .cart-checkout-btn {
+        display: block;
+        width: 100%;
+        padding: 14px 0;
+        margin-top: 20px;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        font-size: 16px;
+        font-weight: 600;
+        text-align: center;
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        transition: background 0.2s;
+    }
+
+        .cart-checkout-btn:hover {
+            background: #333;
+            color: #fff;
+        }
+
+        .cart-checkout-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+    .cart-guest-block {
+        margin-top: 16px;
+        padding: 16px 0;
+        border-top: 1px solid #e8e7e4;
+    }
+
+    .cart-guest-text {
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 12px;
+        text-align: center;
+        line-height: 1.6;
+    }
+
+    .cart-guest-link {
+        color: #1a1a1a;
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        transition: color 0.2s;
+    }
+
+        .cart-guest-link:hover {
+            color: #666;
+        }
+
+    .btn-secondary {
+        background-color: #e5e5e5;
+        color: #999;
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        transition: background 0.2s;
+        border-radius: 50px;
+        padding: 14px 0;
+        font-size: 16px;
+        cursor: default;
+    }
+
+        .btn-secondary:disabled {
+            opacity: 1;
+            cursor: not-allowed;
+        }
+
+    @@media (max-width: 768px) {
+        .cart-title {
+            font-size: 22px;
+        }
+
+        .cart-item-info {
+            padding: 0 8px;
+        }
+
+        .cart-item-name {
+            font-size: 13px;
+        }
+
+        .cart-item-price {
+            font-size: 14px;
+        }
+
+        .cart-item-subtotal {
+            font-size: 14px;
+            min-width: 60px;
+        }
+
+        .cart-summary {
+            padding: 20px 16px;
+            margin-top: 20px;
+        }
+
+        .cart-qty-btn {
+            width: 26px;
+            height: 26px;
+            font-size: 14px;
+        }
+
+        .cart-qty-number {
+            font-size: 14px;
+            min-width: 24px;
+        }
+
+        .cart-guest-text {
+            font-size: 12px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .cart-title {
+            font-size: 18px;
+        }
+
+        .cart-item-name {
+            font-size: 12px;
+        }
+
+        .cart-item-meta {
+            font-size: 10px;
+        }
+
+        .cart-item-price {
+            font-size: 13px;
+        }
+
+        .cart-item-subtotal {
+            font-size: 13px;
+            min-width: 50px;
+        }
+
+        .cart-summary-total {
+            font-size: 16px;
+        }
+
+        .cart-checkout-btn {
+            font-size: 14px;
+            padding: 12px 0;
+        }
+
+        .cart-promo-input {
+            font-size: 12px;
+            padding: 8px 12px;
+        }
+
+        .cart-promo-btn {
+            font-size: 12px;
+            padding: 8px 14px;
+        }
+    }
+
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+            padding: 20px;
+        }
+
+        .empty-state-content {
+            text-align: center;
+            max-width: 480px;
+        }
+
+        .empty-state-icon {
+            display: inline-block;
+            color: #ccc;
+            margin-bottom: 20px;
+            line-height: 1;
+        }
+
+            .empty-state-icon svg {
+                display: block;
+                stroke: #ccc;
+            }
+
+        .empty-state-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-text {
+            font-size: 15px;
+            color: #999;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .empty-state-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #1a1a1a;
+            color: #fff;
+            border: none;
+            padding: 12px 32px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: background 0.25s ease;
+            text-decoration: none;
+            border-radius: 50px;
+        }
+
+            .empty-state-btn:hover {
+                background: #333;
+                color: #fff;
+                text-decoration: none;
+            }
+
+            .empty-state-btn svg {
+                transition: transform 0.25s ease;
+            }
+
+            .empty-state-btn:hover svg {
+                transform: translateX(4px);
+            }
+        @@media (max-width: 576px) {
+            .empty-state {
+                min-height: 50vh;
+            }
+
+            .empty-state-title {
+                font-size: 20px;
+            }
+
+            .empty-state-text {
+                font-size: 14px;
+            }
+
+            .empty-state-btn {
+                font-size: 13px;
+                padding: 10px 24px;
+            }
+
+            .empty-state-icon svg {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    
+</style>

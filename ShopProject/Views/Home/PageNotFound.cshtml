@@ -1,0 +1,84 @@
+﻿@{
+    ViewData["Title"] = "Страница не найдена";
+}
+<div class="page-not-found">
+    <div class="page-not-found-content">
+<div class="container py-5 text-center">
+    <h1 class="display-1 fw-bold text-muted">404</h1>
+    <h2 class="mb-3">Страница не найдена</h2>
+    <p class="text-muted">
+        Страница, которую вы ищете, не существует или была перемещена.
+    </p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-dark rounded-pill px-4">
+        На главную
+    </a>
+</div>
+</div>
+</div>
+<style>
+    .page-not-found {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        padding: 20px;
+    }
+
+    .page-not-found-content {
+        text-align: center;
+        max-width: 500px;
+    }
+
+    .display-1 {
+        font-size: 80px;
+        font-weight: 700;
+        color: #ddd;
+        margin-bottom: 16px;
+        line-height: 1;
+    }
+
+    h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+    }
+
+   
+
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        border-radius: 50px !important;
+        font-weight: 600;
+        font-size: 15px;
+        padding: 12px 40px;
+        transition: background 0.2s;
+        color: #fff;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    @@media (max-width: 576px) {
+        .display-1 {
+            font-size: 60px;
+        }
+
+        h2 {
+            font-size: 22px;
+        }
+
+        
+
+        .btn-dark {
+            font-size: 14px;
+            padding: 10px 28px;
+        }
+    }
+</style>

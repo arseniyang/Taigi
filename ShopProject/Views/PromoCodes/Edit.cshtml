@@ -1,0 +1,254 @@
+﻿@model PromoCode
+
+@{
+    ViewData["Title"] = "Редактировать промокод";
+}
+
+<div class="container py-5">
+    <!-- ===== ЗАГОЛОВОК ===== -->
+    <div class="mb-5">
+        <h1 class="promo-title">Редактировать промокод</h1>
+        <p class="promo-subtitle">Обновите параметры скидки</p>
+    </div>
+
+    <!-- ===== ФОРМА ===== -->
+    <div class="promo-form-wrapper">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="UsedCount" />
+
+            <div asp-validation-summary="ModelOnly" class="taigi-alert taigi-alert-error mb-4" role="alert"></div>
+
+            <div class="row g-4">
+                <!-- ===== ЛЕВАЯ КОЛОНКА ===== -->
+                <div class="col-md-6">
+                    <div class="promo-form-group">
+                        <label asp-for="Code" class="promo-label">Код промокода</label>
+                        <input asp-for="Code" class="promo-input" placeholder="SUMMER2024" />
+                        <span asp-validation-for="Code" class="promo-error"></span>
+                        <small class="promo-hint">Код будет автоматически преобразован в верхний регистр</small>
+                    </div>
+
+                    <div class="promo-form-group">
+                        <label asp-for="DiscountPercent" class="promo-label">Размер скидки (%)</label>
+                        <input asp-for="DiscountPercent" class="promo-input" placeholder="10" />
+                        <span asp-validation-for="DiscountPercent" class="promo-error"></span>
+                    </div>
+                </div>
+
+                <!-- ===== ПРАВАЯ КОЛОНКА ===== -->
+                <div class="col-md-6">
+                    <div class="promo-form-group">
+                        <label asp-for="ExpiryDate" class="promo-label">Срок действия</label>
+                        <input asp-for="ExpiryDate" class="promo-input" type="datetime-local" />
+                        <span asp-validation-for="ExpiryDate" class="promo-error"></span>
+                        <small class="promo-hint">Оставьте пустым для бессрочного промокода</small>
+                    </div>
+
+                    <div class="promo-form-group">
+                        <label asp-for="UsageLimit" class="promo-label">Лимит использований</label>
+                        <input asp-for="UsageLimit" class="promo-input" placeholder="100" />
+                        <span asp-validation-for="UsageLimit" class="promo-error"></span>
+                        <small class="promo-hint">Оставьте пустым для безлимитного использования</small>
+                    </div>
+
+                    <div class="promo-form-group">
+                        <label asp-for="UsedCount" class="promo-label">Использовано</label>
+                        <input asp-for="UsedCount" class="promo-input promo-input-readonly" readonly />
+                        <small class="promo-hint">Счётчик использований (только для чтения)</small>
+                    </div>
+
+                    <div class="promo-checkbox">
+                        <input asp-for="IsActive" class="promo-checkbox-input" />
+                        <label asp-for="IsActive" class="promo-checkbox-label">Промокод активен</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== КНОПКИ ===== -->
+            <div class="promo-form-actions">
+                <button type="submit" class="promo-btn-primary">Сохранить изменения</button>
+                <a asp-action="Index" class="promo-btn-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* ===== ЗАГОЛОВОК ===== */
+    .promo-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: 1px;
+        margin: 0;
+    }
+
+    .promo-subtitle {
+        font-size: 14px;
+        color: #999;
+        margin: 4px 0 0;
+    }
+
+    /* ===== ОБЁРТКА ФОРМЫ ===== */
+    .promo-form-wrapper {
+        background: #fff;
+        border: 1px solid #e8e7e4;
+        padding: 40px;
+        max-width: 900px;
+    }
+
+    /* ===== ПОЛЯ ФОРМЫ ===== */
+    .promo-form-group {
+        margin-bottom: 24px;
+    }
+
+    .promo-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #1a1a1a;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .promo-input {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: #1a1a1a;
+        background: #fff;
+        border: 1px solid #e0dedb;
+        border-radius: 0;
+        transition: border-color 0.2s;
+        outline: none;
+    }
+
+        .promo-input:focus {
+            border-color: #1a1a1a;
+        }
+
+        .promo-input::placeholder {
+            color: #bbb;
+        }
+
+    .promo-input-readonly {
+        background: #f8f7f5;
+        color: #999;
+        cursor: not-allowed;
+    }
+
+    .promo-hint {
+        display: block;
+        font-size: 12px;
+        color: #999;
+        margin-top: 6px;
+    }
+
+    .promo-error {
+        display: block;
+        font-size: 12px;
+        color: #c62828;
+        margin-top: 6px;
+    }
+
+    /* ===== ЧЕКБОКС ===== */
+    .promo-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 0;
+    }
+
+    .promo-checkbox-input {
+        width: 18px;
+        height: 18px;
+        accent-color: #1a1a1a;
+        cursor: pointer;
+    }
+
+    .promo-checkbox-label {
+        font-size: 14px;
+        color: #1a1a1a;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    /* ===== КНОПКИ ===== */
+    .promo-form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid #f0eeeb;
+        flex-wrap: wrap;
+    }
+
+    .promo-btn-primary {
+        display: inline-block;
+        padding: 14px 36px;
+        background: #1a1a1a;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        border: 1px solid #1a1a1a;
+        border-radius: 0;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .promo-btn-primary:hover {
+            background: #333;
+            border-color: #333;
+            color: #fff;
+        }
+
+    .promo-btn-secondary {
+        display: inline-block;
+        padding: 14px 36px;
+        background: transparent;
+        color: #1a1a1a;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        border: 1px solid #1a1a1a;
+        border-radius: 0;
+        transition: all 0.2s;
+    }
+
+        .promo-btn-secondary:hover {
+            background: #f5f4f0;
+            color: #1a1a1a;
+        }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .promo-title {
+            font-size: 24px;
+        }
+
+        .promo-form-wrapper {
+            padding: 24px 20px;
+        }
+
+        .promo-form-actions {
+            flex-direction: column;
+        }
+
+        .promo-btn-primary,
+        .promo-btn-secondary {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,331 @@
+﻿@model IEnumerable<PromoCode>
+
+@{
+    ViewData["Title"] = "Управление промокодами";
+}
+
+<div class="container py-5">
+    <!-- ===== ЗАГОЛОВОК ===== -->
+    <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
+        <div>
+            <h1 class="promo-title">Промокоды</h1>
+            <p class="promo-subtitle">Управление скидками и акциями</p>
+        </div>
+        <a asp-action="Create" class="promo-btn-primary">
+            + Создать промокод
+        </a>
+    </div>
+
+    <!-- ===== УВЕДОМЛЕНИЯ ===== -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="taigi-alert taigi-alert-success mb-4" role="alert">
+            <span class="taigi-alert-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </span>
+            <span class="taigi-alert-text">
+                <strong>@TempData["Success"]</strong>
+            </span>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="taigi-alert taigi-alert-error mb-4" role="alert">
+            <span class="taigi-alert-icon">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+            </span>
+            <span class="taigi-alert-text">
+                <strong>@TempData["Error"]</strong>
+            </span>
+        </div>
+    }
+
+    <!-- ===== ТАБЛИЦА ===== -->
+    @if (!Model.Any())
+    {
+        <div class="promo-empty">
+            <div class="promo-empty-icon">
+                <i class="bi bi-ticket-perforated"></i>
+            </div>
+            <h3 class="promo-empty-title">Промокодов пока нет</h3>
+            <p class="promo-empty-text">Создайте первый промокод, чтобы начать привлекать клиентов</p>
+            <a asp-action="Create" class="promo-btn-primary">+ Создать промокод</a>
+        </div>
+    }
+    else
+    {
+        <div class="promo-table-wrapper">
+            <table class="promo-table">
+                <thead>
+                    <tr>
+                        <th>Код</th>
+                        <th>Скидка</th>
+                        <th>Срок действия</th>
+                        <th>Статус</th>
+                        <th>Использовано</th>
+                        <th class="text-end">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="promo-code-badge">@item.Code</span>
+                            </td>
+                            <td>
+                                <span class="promo-discount">@item.DiscountPercent%</span>
+                            </td>
+                            <td>
+                                @if (item.ExpiryDate.HasValue)
+                                {
+                                    <span>@item.ExpiryDate.Value.ToString("dd.MM.yyyy")</span>
+                                    if (item.ExpiryDate < DateTime.Now)
+                                    {
+                                        <span class="promo-badge promo-badge-danger">Истёк</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">∞</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.IsActive)
+                                {
+                                    <span class="promo-badge promo-badge-success">Активен</span>
+                                }
+                                else
+                                {
+                                    <span class="promo-badge promo-badge-muted">Отключён</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.UsageLimit.HasValue)
+                                {
+                                    <span>@item.UsedCount / @item.UsageLimit</span>
+                                }
+                                else
+                                {
+                                    <span>@item.UsedCount / ∞</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="promo-actions">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="promo-action-btn" title="Редактировать">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form asp-action="Toggle" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="submit" class="promo-action-btn" title="@(item.IsActive ? "Отключить" : "Включить")">
+                                            <i class="bi @(item.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+                                        </button>
+                                    </form>
+                                    <button type="button" class="promo-action-btn promo-action-danger" title="Удалить"
+                                            onclick="confirmDelete(@item.Id, '@item.Code')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- ===== СКРЫТАЯ ФОРМА ДЛЯ УДАЛЕНИЯ ===== -->
+<form id="deleteForm" method="post" asp-action="Delete" style="display:none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="deleteId" />
+</form>
+
+<style>
+    /* ===== ЗАГОЛОВОК ===== */
+    .promo-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: 1px;
+        margin: 0;
+    }
+    .promo-subtitle {
+        font-size: 14px;
+        color: #999;
+        margin: 4px 0 0;
+    }
+
+    /* ===== КНОПКИ ===== */
+    .promo-btn-primary {
+        display: inline-block;
+        padding: 12px 28px;
+        background: #1a1a1a;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        border: 1px solid #1a1a1a;
+        transition: all 0.2s;
+        border-radius: 0;
+    }
+    .promo-btn-primary:hover {
+        background: #333;
+        color: #fff;
+        border-color: #333;
+    }
+
+    /* ===== ТАБЛИЦА ===== */
+    .promo-table-wrapper {
+        background: #fff;
+        border: 1px solid #e8e7e4;
+        overflow-x: auto;
+    }
+    .promo-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+    .promo-table thead {
+        background: #f8f7f5;
+        border-bottom: 2px solid #1a1a1a;
+    }
+    .promo-table th {
+        padding: 16px 20px;
+        text-align: left;
+        font-weight: 600;
+        color: #1a1a1a;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+    .promo-table td {
+        padding: 18px 20px;
+        color: #444;
+        border-bottom: 1px solid #f0eeeb;
+        vertical-align: middle;
+    }
+    .promo-table tbody tr:hover {
+        background: #fafaf8;
+    }
+    .promo-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* ===== БЕЙДЖИ И ЭЛЕМЕНТЫ ===== */
+    .promo-code-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        background: #1a1a1a;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+    }
+    .promo-discount {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+    .promo-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    .promo-badge-success {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    .promo-badge-danger {
+        background: #ffebee;
+        color: #c62828;
+    }
+    .promo-badge-muted {
+        background: #f5f5f5;
+        color: #999;
+    }
+
+    /* ===== ДЕЙСТВИЯ ===== */
+    .promo-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+    .promo-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: #fff;
+        border: 1px solid #e0dedb;
+        color: #555;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        border-radius: 0;
+    }
+    .promo-action-btn:hover {
+        background: #f5f4f0;
+        border-color: #1a1a1a;
+        color: #1a1a1a;
+    }
+    .promo-action-danger:hover {
+        background: #ffebee;
+        border-color: #c62828;
+        color: #c62828;
+    }
+
+    /* ===== ПУСТОЕ СОСТОЯНИЕ ===== */
+    .promo-empty {
+        text-align: center;
+        padding: 80px 20px;
+        background: #fafaf8;
+        border: 1px dashed #e0dedb;
+    }
+    .promo-empty-icon {
+        font-size: 48px;
+        color: #d0cec9;
+        margin-bottom: 16px;
+    }
+    .promo-empty-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+    }
+    .promo-empty-text {
+        font-size: 14px;
+        color: #999;
+        margin-bottom: 24px;
+    }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .promo-title { font-size: 24px; }
+        .promo-table th,
+        .promo-table td { padding: 12px 14px; font-size: 13px; }
+        .promo-actions { flex-direction: column; gap: 4px; }
+        .promo-action-btn { width: 32px; height: 32px; font-size: 13px; }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, code) {
+            showConfirm(
+                'Удалить промокод?',
+                'Вы уверены, что хотите удалить промокод «' + code + '»? Это действие нельзя отменить.',
+                function() {
+                    document.getElementById('deleteId').value = id;
+                    document.getElementById('deleteForm').submit();
+                }
+            );
+        }
+    </script>
+}

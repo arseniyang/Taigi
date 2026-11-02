@@ -1,0 +1,445 @@
+﻿@model IEnumerable<WishlistItem>
+
+@{
+    ViewData["Title"] = "Избранное";
+}
+
+<div class="container py-4">
+    <h2 class="page-title mb-4">Избранное</h2>
+
+    @if (TempData["WishlistSuccess"] != null)
+    {
+        <div class="taigi-alert taigi-alert-success" role="alert">
+            <span class="taigi-alert-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </span>
+            <span class="taigi-alert-text">
+                <strong>@TempData["WishlistSuccess"]</strong>
+            </span>
+            <button type="button" class="taigi-alert-close" data-dismiss="alert" aria-label="Закрыть">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    }
+    @if (TempData["WishlistInfo"] != null)
+    {
+        <div class="taigi-alert taigi-alert-info" role="alert">
+            <span class="taigi-alert-icon">
+                <i class="bi bi-info-circle-fill"></i>
+            </span>
+            <span class="taigi-alert-text">
+                <strong>@TempData["WishlistInfo"]</strong>
+            </span>
+            <button type="button" class="taigi-alert-close" data-dismiss="alert" aria-label="Закрыть">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-state-content">
+                <div class="empty-state-icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                </div>
+                <h3 class="empty-state-title">Список избранного пуст</h3>
+                <p class="empty-state-text">
+                    Добавляйте товары в избранное, чтобы не потерять их.<br />
+                    Откройте для себя коллекцию TAIGI.
+                </p>
+                <a asp-controller="Catalog" asp-action="Index" class="empty-state-btn">
+                    Перейти в каталог
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var item in Model)
+            {
+                var product = item.Product;
+                <div class="col-6 col-md-3">
+                    <div class="wishlist-card">
+                        <div class="wishlist-card-image">
+                            <a asp-controller="Catalog" asp-action="Details" asp-route-id="@product?.Id">
+                                @if (product != null && product.Images.Any())
+                                {
+                                    <img src="@product.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl" alt="@product.Name" />
+                                }
+                                else
+                                {
+                                    <div class="no-image">Нет фото</div>
+                                }
+                            </a>
+                            <form asp-action="Remove" method="post" class="wishlist-remove-form">
+                                <input type="hidden" name="productId" value="@product?.Id" />
+                                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                <button type="submit" class="wishlist-remove-btn" title="Удалить из избранного">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="wishlist-card-body">
+                            <div class="wishlist-card-name">@product?.Name</div>
+                            <div class="wishlist-card-price">@(product?.Price.ToString("N0") ?? "0") ₽</div>
+                            @if (product != null)
+                            {
+                                <a asp-controller="Catalog" asp-action="Details" asp-route-id="@product.Id" class="wishlist-card-link">
+                                    Подробнее
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="text-center mt-4">
+            <form asp-action="Clear" method="post" onsubmit="return confirm('Удалить все товары из избранного?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger rounded-pill px-4">
+                    Очистить список
+                </button>
+            </form>
+        </div>
+    }
+</div>
+
+<style>
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    /* ===== ПУСТОЕ СОСТОЯНИЕ ===== */
+    .empty-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
+        padding: 20px;
+    }
+
+    .empty-state-content {
+        text-align: center;
+        max-width: 480px;
+    }
+
+    .empty-state-icon {
+        display: inline-block;
+        color: #ccc;
+        margin-bottom: 20px;
+        line-height: 1;
+    }
+
+        .empty-state-icon svg {
+            display: block;
+            stroke: #ccc;
+        }
+
+    .empty-state-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 10px;
+    }
+
+    .empty-state-text {
+        font-size: 15px;
+        color: #999;
+        line-height: 1.6;
+        margin-bottom: 28px;
+    }
+
+    .empty-state-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        padding: 12px 32px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: background 0.25s ease;
+        text-decoration: none;
+        border-radius: 50px;
+    }
+
+        .empty-state-btn:hover {
+            background: #333;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .empty-state-btn svg {
+            transition: transform 0.25s ease;
+        }
+
+        .empty-state-btn:hover svg {
+            transform: translateX(4px);
+        }
+
+    /* ===== КАРТОЧКИ ===== */
+    .wishlist-card {
+        background: #fff;
+        border: 1px solid #f0eeeb;
+        overflow: hidden;
+        transition: transform 0.25s ease;
+        height: 100%;
+        position: relative;
+    }
+
+        .wishlist-card:hover {
+            transform: translateY(-4px);
+        }
+
+    .wishlist-card-image {
+        position: relative;
+        aspect-ratio: 3 / 4;
+        background: #f5f5f5;
+        overflow: hidden;
+    }
+
+        .wishlist-card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .wishlist-card-image .no-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 13px;
+        }
+
+    .wishlist-remove-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 14px;
+        padding: 0;
+    }
+
+        .wishlist-remove-btn:hover {
+            background: #dc3545;
+            border-color: #dc3545;
+        }
+
+    .wishlist-card-body {
+        padding: 12px 14px 16px;
+        text-align: center;
+    }
+
+    .wishlist-card-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #1a1a1a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 2px;
+    }
+
+    .wishlist-card-price {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 6px;
+    }
+
+    .wishlist-card-link {
+        font-size: 11px;
+        font-weight: 600;
+        color: #999;
+        text-decoration: none;
+        letter-spacing: 1px;
+        transition: color 0.2s;
+    }
+
+        .wishlist-card-link:hover {
+            color: #1a1a1a;
+        }
+
+    /* ===== УВЕДОМЛЕНИЯ ===== */
+    .taigi-alert {
+        padding: 14px 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e8e7e4;
+        background: #f8f7f5;
+        font-size: 14px;
+        color: #1a1a1a;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-radius: 0;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .taigi-alert-success {
+        border-left: 3px solid #2d7d46;
+        background: #f5f8f6;
+    }
+
+        .taigi-alert-success .taigi-alert-icon {
+            color: #2d7d46;
+            font-size: 18px;
+        }
+
+    .taigi-alert-info {
+        border-left: 3px solid #1a1a1a;
+        background: #f8f7f5;
+    }
+
+        .taigi-alert-info .taigi-alert-icon {
+            color: #1a1a1a;
+            font-size: 18px;
+        }
+
+    .taigi-alert-close {
+        margin-left: auto;
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: #999;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+        transition: color 0.2s;
+    }
+
+        .taigi-alert-close:hover {
+            color: #1a1a1a;
+        }
+
+    .taigi-alert-text {
+        flex: 1;
+    }
+
+        .taigi-alert-text strong {
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+
+    /* ===== КНОПКИ ===== */
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 15px;
+        padding: 12px 32px;
+        transition: background 0.2s;
+        color: #fff;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    .btn-outline-danger {
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        background: transparent;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 10px 24px;
+        border-radius: 50px;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: #fff;
+        }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .page-title {
+            font-size: 20px;
+        }
+
+        .wishlist-card-name {
+            font-size: 12px;
+        }
+
+        .wishlist-card-price {
+            font-size: 14px;
+        }
+
+        .wishlist-remove-btn {
+            width: 26px;
+            height: 26px;
+            font-size: 12px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .empty-state {
+            min-height: 40vh;
+        }
+
+        .empty-state-title {
+            font-size: 20px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        .empty-state-btn {
+            font-size: 13px;
+            padding: 10px 24px;
+        }
+
+        .empty-state-icon svg {
+            width: 60px;
+            height: 60px;
+        }
+
+        .wishlist-card-name {
+            font-size: 11px;
+        }
+
+        .wishlist-card-price {
+            font-size: 13px;
+        }
+
+        .wishlist-card-link {
+            font-size: 10px;
+        }
+    }
+</style>

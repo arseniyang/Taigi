@@ -1,0 +1,241 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using ShopProject.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<nav class="mobile-bottom-nav">
+    <a asp-controller="Home" asp-action="Index" class="mobile-nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1" />
+        </svg>
+        <span>Главная</span>
+    </a>
+
+    <a asp-controller="Catalog" asp-action="Index" class="mobile-nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+        <span>Каталог</span>
+    </a>
+
+    <a asp-controller="Cart" asp-action="Index" class="mobile-nav-item mobile-nav-cart">
+        <div class="mobile-nav-cart-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+            @if (Context.Session.GetInt32("CartCount") > 0)
+            {
+                <span class="mobile-nav-cart-badge">@Context.Session.GetInt32("CartCount")</span>
+            }
+        </div>
+        <span>Корзина</span>
+    </a>
+
+    <!-- ===== ВИШЛИСТ (ИЗБРАННОЕ) ===== -->
+    <a asp-controller="Wishlist" asp-action="Index" class="mobile-nav-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        </svg>
+        <span>Избранное</span>
+    </a>
+
+    @if (SignInManager.IsSignedIn(User))
+    {
+        <a asp-controller="Account" asp-action="Profile" class="mobile-nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span>Профиль</span>
+        </a>
+    }
+    else
+    {
+        <a asp-area="Identity" asp-page="/Account/Login" class="mobile-nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            <span>Войти</span>
+        </a>
+    }
+</nav>
+
+<style>
+    .mobile-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 62px;
+        background: #fff;
+        border-top: 1px solid #e8e7e4;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 1000;
+        padding: 4px 0 env(safe-area-inset-bottom);
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .mobile-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        color: #999;
+        text-decoration: none;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        transition: color 0.2s;
+        padding: 4px 12px;
+        min-width: 56px;
+        position: relative;
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+        .mobile-nav-item:hover {
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .mobile-nav-item.active {
+            color: #1a1a1a;
+        }
+
+        .mobile-nav-item svg {
+            stroke: currentColor;
+            transition: stroke 0.2s;
+        }
+
+        .mobile-nav-item span {
+            line-height: 1;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+        }
+
+    /* ===== КОРЗИНА ===== */
+    .mobile-nav-cart-icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-nav-cart-badge {
+        position: absolute;
+        top: -6px;
+        right: -10px;
+        background: #1a1a1a;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        line-height: 1;
+    }
+
+    /* ===== СКРЫВАЕМ НА ДЕСКТОПЕ ===== */
+    @@media (min-width: 769px) {
+        .mobile-bottom-nav {
+            display: none !important;
+        }
+
+        body {
+            padding-bottom: 0 !important;
+        }
+    }
+
+    /* ===== ПОКАЗЫВАЕМ НА МОБИЛЬНЫХ ===== */
+    @@media (max-width: 768px) {
+        .mobile-bottom-nav {
+            display: flex;
+        }
+
+        body {
+            padding-bottom: 70px !important;
+        }
+    }
+
+    /* ===== АДАПТИВ ДЛЯ МАЛЕНЬКИХ ЭКРАНОВ ===== */
+    @@media (max-width: 400px) {
+        .mobile-nav-item {
+            padding: 4px 8px;
+            min-width: 44px;
+        }
+
+            .mobile-nav-item svg {
+                width: 20px;
+                height: 20px;
+            }
+
+            .mobile-nav-item span {
+                font-size: 9px;
+            }
+
+        .mobile-nav-cart-badge {
+            min-width: 16px;
+            height: 16px;
+            font-size: 9px;
+            top: -4px;
+            right: -8px;
+        }
+    }
+
+    /* ===== ДЛЯ ТЕМНЫХ ТЕМ (ОПЦИОНАЛЬНО) ===== */
+    @@media (prefers-color-scheme: dark) {
+        .mobile-bottom-nav {
+            background: #1a1a1a;
+            border-top-color: #2a2a2a;
+        }
+
+        .mobile-nav-item {
+            color: #666;
+        }
+
+            .mobile-nav-item:hover,
+            .mobile-nav-item.active {
+                color: #fff;
+            }
+
+        .mobile-nav-cart-badge {
+            background: #fff;
+            color: #1a1a1a;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Подсветка активного пункта меню
+        const currentUrl = window.location.pathname;
+
+        document.querySelectorAll('.mobile-nav-item').forEach(function(item) {
+            const href = item.getAttribute('href');
+            if (href && currentUrl.includes(href.replace(/^\//, '')) && href !== '/') {
+                item.classList.add('active');
+            }
+        });
+
+        // Для главной страницы
+        if (currentUrl === '/' || currentUrl === '/Home/Index') {
+            const homeLink = document.querySelector('.mobile-nav-item[href*="Home"]');
+            if (homeLink) homeLink.classList.add('active');
+        }
+    });
+</script>

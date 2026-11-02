@@ -1,0 +1,966 @@
+﻿@model Product
+
+@{
+    ViewData["Title"] = Model.Name;
+    var mainImage = Model.Images?.OrderBy(i => i.DisplayOrder).FirstOrDefault();
+    var availableSizes = Model.Sizes?.Where(s => s.IsAvailable && s.StockQuantity > 0).OrderBy(s => s.Size).ToList();
+    var hasAvailableSizes = availableSizes != null && availableSizes.Any();
+    var isActive = Model.IsActive && (hasAvailableSizes || !Model.HasSizes);
+    var recommendations = ViewBag.Recommendations as List<Product> ?? new List<Product>();
+    var images = Model.Images?.OrderBy(i => i.DisplayOrder).ToList() ?? new List<ProductImage>();
+    var imageCount = images.Count;
+    var isInWishlist = ViewBag.IsInWishlist != null && ViewBag.IsInWishlist == true;
+}
+
+<div class="container py-5">
+    <form id="antiForgeryForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Главная</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index">Каталог</a></li>
+            @if (Model.Category != null)
+            {
+                <li class="breadcrumb-item"><a asp-controller="Catalog" asp-action="Index" asp-route-categoryId="@Model.CategoryId">@Model.Category.Name</a></li>
+            }
+            <li class="breadcrumb-item active">@Model.Name</li>
+        </ol>
+    </nav>
+
+   
+
+    <div class="row g-5">
+
+        <div class="col-lg-6">
+            <div class="product-gallery">
+                <div class="product-gallery-main" id="galleryMain">
+                    <img id="mainImage"
+                         src="@(mainImage?.ImageUrl ?? "/images/no-image.png")"
+                         alt="@Model.Name" />
+
+                    @if (imageCount > 1)
+                    {
+                        <div class="gallery-nav gallery-nav-left" id="galleryLeft">
+                            <span class="gallery-nav-arrow">‹</span>
+                        </div>
+                        <div class="gallery-nav gallery-nav-right" id="galleryRight">
+                            <span class="gallery-nav-arrow">›</span>
+                        </div>
+                    }
+
+                    @if (!Model.IsActive || (Model.HasSizes && !hasAvailableSizes))
+                    {
+                        <div class="product-gallery-badge">НЕТ В НАЛИЧИИ</div>
+                    }
+                    @if (Model.OldPrice.HasValue && Model.OldPrice > Model.Price)
+                    {
+                        <div class="product-gallery-sale">-@Math.Round((1 - Model.Price / Model.OldPrice.Value) * 100)%</div>
+                    }
+                </div>
+
+                @if (imageCount > 1)
+                {
+                    <div class="product-gallery-thumbnails" id="galleryThumbnails">
+                        @for (int i = 0; i < imageCount; i++)
+                        {
+                            var image = images[i];
+                            <div class="product-gallery-thumbnail @(i == 0 ? "active" : "")"
+                                 data-index="@i"
+                                 onclick="goToImage(@i)">
+                                <img src="@image.ImageUrl" alt="@Model.Name" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="product-info">
+                @if (!string.IsNullOrEmpty(Model.Article))
+                {
+                    <div class="product-article">@Model.Article</div>
+                }
+
+                <h1 class="product-title">@Model.Name</h1>
+
+                <div class="product-price">
+                    @if (Model.OldPrice.HasValue && Model.OldPrice > Model.Price)
+                    {
+                        <span class="product-price-old">@Model.OldPrice.Value.ToString("N0") ₽</span>
+                        <span class="product-price-current">@Model.Price.ToString("N0") ₽</span>
+                    }
+                    else
+                    {
+                        <span class="product-price-current">@Model.Price.ToString("N0") ₽</span>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Color))
+                {
+                    <div class="product-attribute">
+                        <span class="product-attribute-label">Цвет</span>
+                        <span class="product-attribute-value">@Model.Color</span>
+                    </div>
+                }
+
+                @if (Model.HasSizes)
+                {
+                    <div class="product-sizes">
+                        <div class="product-sizes-label">Размер</div>
+                        @if (hasAvailableSizes)
+                        {
+                            <div class="product-sizes-list">
+                                @foreach (var size in availableSizes)
+                                {
+                                    <button type="button"
+                                            class="product-size-btn"
+                                            data-size="@size.Size"
+                                            onclick="selectSize(this)">
+                                        @size.Size
+                                    </button>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="product-unavailable-message">
+                                Все размеры закончились
+                            </div>
+                        }
+                    </div>
+                }
+
+                <div class="product-actions">
+                    <div class="d-flex gap-3 align-items-center">
+
+                        <!-- ===== КНОПКА ИЗБРАННОЕ (AJAX) — ВСЕГДА ДОСТУПНА ===== -->
+                        <!-- ===== КНОПКА ИЗБРАННОЕ (AJAX) ===== -->
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            
+                            <button type="button"
+                                    class="wishlist-btn-base wishlist-details-btn @(isInWishlist ? "active" : "")"
+                                    data-product-id="@Model.Id"
+                                    onclick="toggleWishlist(this)"
+                                    title="В избранное">
+                                <i class="bi bi-heart"></i>
+                            </button>
+                            
+                        }
+                        else
+                        {
+                            <a asp-area="Identity" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path"
+                               class="wishlist-btn-base wishlist-details-btn" title="Войдите, чтобы добавить в избранное">
+                                <i class="bi bi-heart"></i>
+                            </a>
+                        }
+
+                        @if (isActive)
+                        {
+                            <form asp-controller="Cart" asp-action="Add" method="post" id="addToCartForm" class="flex-grow-1">
+                                <input type="hidden" name="productId" value="@Model.Id" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <input type="hidden" name="size" id="selectedSizeInput" value="" />
+                                <button type="submit"
+                                        id="addToCartBtn"
+                                        class="product-add-btn"
+                                    @(Model.HasSizes && !hasAvailableSizes ? "disabled" : "")>
+                                    @(Model.HasSizes && !hasAvailableSizes ? "Нет в наличии" : "В корзину")
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <button class="product-add-btn disabled" disabled>
+                                Нет в наличии
+                            </button>
+                        }
+                    </div>
+
+                    @if (!isActive)
+                    {
+                        <div class="product-unavailable-message mt-2">
+                            @if (!Model.IsActive)
+                            {
+                                <span>Товар временно скрыт</span>
+                            }
+                            else if (Model.HasSizes && !hasAvailableSizes)
+                            {
+                                <span>Все размеры закончились</span>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <div class="product-description">
+                        <h3>Описание</h3>
+                        <p>@Model.Description</p>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Material) || !string.IsNullOrEmpty(Model.Country))
+                {
+                    <div class="product-attributes">
+                        @if (!string.IsNullOrEmpty(Model.Material))
+                        {
+                            <div class="product-attribute">
+                                <span class="product-attribute-label">Материал</span>
+                                <span class="product-attribute-value">@Model.Material</span>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Country))
+                        {
+                            <div class="product-attribute">
+                                <span class="product-attribute-label">Страна</span>
+                                <span class="product-attribute-value">@Model.Country</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (recommendations.Any())
+    {
+        <div class="recommendations">
+            <h3 class="recommendations-title">Вам может понравиться</h3>
+            <div class="recommendations-grid">
+                @foreach (var rec in recommendations)
+                {
+                    <a asp-action="Details" asp-route-id="@rec.Id" class="recommendations-item">
+                        <div class="recommendations-item-image">
+                            @if (rec.Images.Any())
+                            {
+                                <img src="@rec.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl" alt="@rec.Name" />
+                            }
+                            else
+                            {
+                                <span>Нет фото</span>
+                            }
+                        </div>
+                        <div class="recommendations-item-name">@rec.Name</div>
+                        <div class="recommendations-item-price">@rec.Price.ToString("N0") ₽</div>
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        var selectedSize = null;
+        var hasSizes = @(Model.HasSizes ? "true" : "false");
+        var hasAvailableSizes = @(hasAvailableSizes ? "true" : "false");
+        var imageCount = @imageCount;
+        var currentIndex = 0;
+        var images = @Html.Raw(Json.Serialize(images.Select(i => i.ImageUrl).ToList()));
+
+        function goToImage(index) {
+            if (index < 0) index = imageCount - 1;
+            if (index >= imageCount) index = 0;
+
+            currentIndex = index;
+            document.getElementById('mainImage').src = images[currentIndex];
+
+            document.querySelectorAll('.product-gallery-thumbnail').forEach(function(t, i) {
+                t.classList.toggle('active', i === currentIndex);
+            });
+        }
+
+        function selectSize(btn) {
+            if (!hasSizes) return;
+
+            document.querySelectorAll('.product-size-btn').forEach(function(b) {
+                b.classList.remove('selected');
+            });
+
+            btn.classList.add('selected');
+            selectedSize = btn.getAttribute('data-size');
+            document.getElementById('selectedSizeInput').value = selectedSize;
+            document.getElementById('addToCartBtn').disabled = false;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var leftNav = document.getElementById('galleryLeft');
+            var rightNav = document.getElementById('galleryRight');
+
+            if (leftNav) {
+                leftNav.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    goToImage(currentIndex - 1);
+                });
+            }
+
+            if (rightNav) {
+                rightNav.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    goToImage(currentIndex + 1);
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    goToImage(currentIndex - 1);
+                } else if (e.key === 'ArrowRight') {
+                    goToImage(currentIndex + 1);
+                }
+            });
+        });
+
+        document.getElementById('addToCartForm').addEventListener('submit', function(e) {
+            if (hasSizes && hasAvailableSizes && !selectedSize) {
+                e.preventDefault();
+                showNotification('Пожалуйста, выберите размер');
+                return false;
+            }
+        });
+
+        if (!hasSizes) {
+            document.getElementById('addToCartBtn').disabled = false;
+            document.getElementById('selectedSizeInput').value = 'OneSize';
+        }
+
+        if (hasSizes && hasAvailableSizes) {
+            document.getElementById('addToCartBtn').disabled = true;
+        }
+
+        // ================================================================
+        // AJAX ДЛЯ КНОПКИ ИЗБРАННОЕ
+        // ================================================================
+        function toggleWishlist(btn) {
+            const productId = btn.dataset.productId;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+            const tokenValue = token ? token.value : '';
+
+            fetch('/Wishlist/Toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': tokenValue
+                },
+                body: JSON.stringify({ productId: parseInt(productId) })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        btn.classList.toggle('active');
+                        showNotification(data.message, 'success');
+                    } else if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        showNotification(data.message || 'Ошибка', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    showNotification('Произошла ошибка', 'error');
+                });
+        }
+       
+
+        
+    </script>
+}
+
+<style>
+    .breadcrumb {
+        background: none;
+        padding: 0;
+        margin-bottom: 24px;
+        font-size: 13px;
+    }
+
+    .breadcrumb-item a {
+        color: #666;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+        .breadcrumb-item a:hover {
+            color: #000;
+        }
+
+    .breadcrumb-item.active {
+        color: #000;
+        font-weight: 600;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "/";
+        color: #ccc;
+        padding: 0 8px;
+    }
+
+    .product-gallery {
+        position: sticky;
+        top: 20px;
+    }
+
+    .product-gallery-main {
+        position: relative;
+        background: #f8f8f8;
+        border: 1px solid #e8e8e8;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+        .product-gallery-main img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.4s ease;
+            pointer-events: none;
+        }
+
+        .product-gallery-main:hover img {
+            transform: scale(1.02);
+        }
+
+    .gallery-nav {
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 3;
+        opacity: 0;
+        transition: opacity 0.3s ease, background 0.3s ease;
+        background: transparent;
+        user-select: none;
+    }
+
+        .gallery-nav:hover {
+            opacity: 1;
+        }
+
+    .gallery-nav-left {
+        left: 0;
+    }
+
+    .gallery-nav-right {
+        right: 0;
+    }
+
+    .gallery-nav-arrow {
+        font-size: 32px;
+        font-family: Georgia, serif;
+        color: #000;
+        font-weight: 300;
+        background: rgba(255, 255, 255, 0.85);
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.25s ease, transform 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .gallery-nav-left .gallery-nav-arrow {
+        padding-right: 2px;
+    }
+
+    .gallery-nav-right .gallery-nav-arrow {
+        padding-left: 2px;
+    }
+
+    .gallery-nav:hover .gallery-nav-arrow {
+        background: rgba(255, 255, 255, 1);
+        transform: scale(1.05);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-gallery-main:hover .gallery-nav {
+        opacity: 1;
+    }
+
+    .product-gallery-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: #000;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 14px;
+        letter-spacing: 0.5px;
+        z-index: 2;
+    }
+
+    .product-gallery-sale {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: #000;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 4px 14px;
+        letter-spacing: 0.5px;
+        z-index: 2;
+    }
+
+    .product-gallery-thumbnails {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .product-gallery-thumbnail {
+        flex: 0 0 100px;
+        height: 100px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        overflow: hidden;
+        background: #f8f8f8;
+        transition: border-color 0.25s ease, transform 0.2s ease;
+    }
+
+        .product-gallery-thumbnail:hover {
+            border-color: #999;
+            transform: scale(1.03);
+        }
+
+        .product-gallery-thumbnail.active {
+            border-color: #000;
+        }
+
+        .product-gallery-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .product-info {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .product-article {
+        font-size: 13px;
+        color: #999;
+        letter-spacing: 0.3px;
+    }
+
+    .product-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #000;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .product-price {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 16px 0;
+        border-top: 1px solid #e8e8e8;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .product-price-current {
+        font-size: 28px;
+        font-weight: 700;
+        color: #000;
+    }
+
+    .product-price-old {
+        font-size: 18px;
+        color: #999;
+        text-decoration: line-through;
+    }
+
+    .product-attribute {
+        display: flex;
+        gap: 16px;
+        font-size: 14px;
+        padding: 3px 0;
+    }
+
+    .product-attribute-label {
+        color: #999;
+        min-width: 80px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+    }
+
+    .product-attribute-value {
+        color: #000;
+    }
+
+    .product-sizes {
+        padding: 12px 0;
+        border-top: 1px solid #e8e8e8;
+    }
+
+    .product-sizes-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #000;
+        letter-spacing: 0.3px;
+        margin-bottom: 10px;
+    }
+
+    .product-sizes-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .product-size-btn {
+        min-width: 44px;
+        height: 44px;
+        padding: 0 16px;
+        border: 1px solid #d5d5d5;
+        background: #fff;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: #000;
+        transition: all 0.2s ease;
+        letter-spacing: 0.3px;
+    }
+
+        .product-size-btn:hover {
+            border-color: #000;
+            background: #f5f5f5;
+        }
+
+        .product-size-btn.selected {
+            border-color: #000;
+            background: #000;
+            color: #fff;
+        }
+
+    .product-actions {
+        padding: 12px 0;
+        border-top: 1px solid #e8e8e8;
+    }
+
+    .product-add-btn {
+        flex: 1;
+        padding: 14px 24px;
+        background: #000;
+        color: #fff;
+        border: none;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.25s ease;
+        letter-spacing: 0.5px;
+    }
+
+        .product-add-btn:hover:not(:disabled) {
+            background: #2a2a2a;
+        }
+
+        .product-add-btn.disabled,
+        .product-add-btn:disabled {
+            background: #e8e8e8;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
+    .product-unavailable-message {
+        font-size: 13px;
+        color: #999;
+        text-align: center;
+        padding: 6px 0 0;
+    }
+
+    .product-description {
+        padding: 16px 0;
+        border-top: 1px solid #e8e8e8;
+    }
+
+        .product-description h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
+            letter-spacing: 0.3px;
+            margin-bottom: 8px;
+        }
+
+        .product-description p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+    .product-attributes {
+        padding: 12px 0;
+        border-top: 1px solid #e8e8e8;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .recommendations {
+        margin-top: 56px;
+        padding-top: 32px;
+        border-top: 1px solid #e8e8e8;
+    }
+
+    .recommendations-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #000;
+        letter-spacing: 0.3px;
+        margin-bottom: 24px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #000;
+        display: inline-block;
+    }
+
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .recommendations-item {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid #e8e8e8;
+        transition: border-color 0.25s ease;
+        overflow: hidden;
+    }
+
+        .recommendations-item:hover {
+            border-color: #000;
+            text-decoration: none;
+            color: inherit;
+        }
+
+    .recommendations-item-image {
+        aspect-ratio: 1 / 1;
+        background: #f8f8f8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+        .recommendations-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+    .recommendations-item:hover .recommendations-item-image img {
+        transform: scale(1.03);
+    }
+
+    .recommendations-item-image span {
+        font-size: 13px;
+        color: #ccc;
+    }
+
+    .recommendations-item-name {
+        padding: 10px 12px 4px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #000;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .recommendations-item-price {
+        padding: 0 12px 12px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #000;
+    }
+
+    /* ===== ОБЩИЕ СТИЛИ ДЛЯ КНОПКИ ❤ ===== */
+    .wishlist-btn-base {
+        border-radius: 50%;
+        border: 1px solid #e0dedb;
+        background: #fff;
+        color: #ccc;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.25s ease;
+        padding: 0;
+    }
+
+        .wishlist-btn-base:hover {
+            background: #fff;
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .wishlist-btn-base.active {
+            background: #dc3545;
+            color: #fff;
+            border-color: #dc3545;
+        }
+
+            .wishlist-btn-base.active:hover {
+                background: #c62828;
+                border-color: #c62828;
+                color: #fff;
+            }
+
+    .wishlist-details-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+
+    .wishlist-details-form {
+        flex-shrink: 0;
+    }
+
+    .product-actions .d-flex {
+        gap: 12px;
+        align-items: center;
+    }
+
+    @@media (max-width: 992px) {
+        .recommendations-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .product-gallery-thumbnail {
+            flex: 0 0 80px;
+            height: 80px;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .product-gallery {
+            position: static;
+        }
+
+        .product-title {
+            font-size: 22px;
+        }
+
+        .product-price-current {
+            font-size: 22px;
+        }
+
+        .product-price-old {
+            font-size: 16px;
+        }
+
+        .product-gallery-thumbnail {
+            flex: 0 0 68px;
+            height: 68px;
+        }
+
+        .recommendations-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .gallery-nav {
+            width: 36px;
+        }
+
+        .gallery-nav-arrow {
+            font-size: 26px;
+            width: 32px;
+            height: 32px;
+        }
+
+        .product-gallery-sale {
+            font-size: 11px;
+            padding: 3px 10px;
+        }
+
+        .product-gallery-badge {
+            font-size: 10px;
+            padding: 3px 10px;
+        }
+
+        .wishlist-details-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 17px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .product-title {
+            font-size: 18px;
+        }
+
+        .product-price-current {
+            font-size: 20px;
+        }
+
+        .product-gallery-thumbnail {
+            flex: 0 0 56px;
+            height: 56px;
+        }
+
+        .product-size-btn {
+            min-width: 38px;
+            height: 38px;
+            font-size: 12px;
+            padding: 0 12px;
+        }
+
+        .product-add-btn {
+            font-size: 14px;
+            padding: 12px 20px;
+        }
+
+        .recommendations-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .recommendations-item-name {
+            font-size: 12px;
+        }
+
+        .recommendations-item-price {
+            font-size: 13px;
+        }
+
+        .gallery-nav {
+            width: 30px;
+        }
+
+        .gallery-nav-arrow {
+            font-size: 20px;
+            width: 28px;
+            height: 28px;
+        }
+
+        .wishlist-details-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 15px;
+        }
+    }
+</style>

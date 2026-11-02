@@ -1,0 +1,89 @@
+﻿@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Вход";
+}
+
+<div class="container" style="max-width: 480px; padding-top: 40px; padding-bottom: 60px;">
+    <div class="text-center mb-4">
+        <h1 class="display-6 fw-bold" style="letter-spacing: 2px;">ВХОД</h1>
+        <p class="text-muted small">Войдите в свой аккаунт TAIGI</p>
+    </div>
+
+    <form id="account" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+            <label asp-for="Input.Email">Email</label>
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-2">
+            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+            <label asp-for="Input.Password">Пароль</label>
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check">
+                <input class="form-check-input" asp-for="Input.RememberMe" />
+                <label class="form-check-label" asp-for="Input.RememberMe">Запомнить меня</label>
+            </div>
+            <a asp-page="./ForgotPassword" class="text-muted small text-decoration-none">Забыли пароль?</a>
+        </div>
+
+        <button id="login-submit" type="submit" class="btn btn-dark w-100 py-2 rounded-pill fw-semibold" style="letter-spacing: 1px;">
+            ВОЙТИ
+        </button>
+
+        <div class="text-center mt-3">
+            <p class="text-muted small">
+                Нет аккаунта? <a asp-page="./Register" class="text-dark fw-semibold text-decoration-none">Зарегистрироваться</a>
+            </p>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+    .form-floating > .form-control {
+        border-radius: 0;
+        border: 1px solid #ddd;
+        padding: 12px 16px;
+        height: 56px;
+        font-size: 14px;
+    }
+
+        .form-floating > .form-control:focus {
+            border-color: #1a1a1a;
+            box-shadow: none;
+        }
+
+    .form-floating > label {
+        padding: 12px 16px;
+        font-size: 13px;
+        color: #999;
+    }
+
+    .form-check-input:checked {
+        background-color: #1a1a1a;
+        border-color: #1a1a1a;
+    }
+
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        transition: background 0.2s;
+        padding: 14px;
+        font-size: 14px;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+        }
+</style>

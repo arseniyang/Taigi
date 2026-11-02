@@ -1,0 +1,332 @@
+﻿@model Product
+
+@{
+    ViewData["Title"] = "Удаление товара";
+    var isInOrders = ViewBag.IsInOrders as bool? ?? false;
+    var isInCarts = ViewBag.IsInCarts as bool? ?? false;
+}
+
+<div class="container py-4" style="max-width: 640px;">
+    <h2 class="page-title">Удаление товара</h2>
+    <hr class="page-divider" />
+
+    @if (isInOrders)
+    {
+        <div class="alert alert-danger-custom">
+            <h5 class="alert-title">Этот товар нельзя удалить</h5>
+            <p>Товар <strong>@Model.Name</strong> уже есть в заказах покупателей.</p>
+            <p class="text-muted small">Вы можете скрыть товар из каталога вместо удаления.</p>
+            <form asp-action="Hide" method="post" class="d-inline">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-dark rounded-pill px-4">Скрыть товар</button>
+            </form>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Отмена</a>
+        </div>
+    }
+    else if (isInCarts)
+    {
+        <div class="alert alert-warning-custom">
+            <h5 class="alert-title">Этот товар нельзя удалить</h5>
+            <p>Товар <strong>@Model.Name</strong> находится в корзинах пользователей.</p>
+            <p class="text-muted small">Сначала удалите товар из всех корзин или скройте его.</p>
+            <form asp-action="Hide" method="post" class="d-inline">
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-dark rounded-pill px-4">Скрыть товар</button>
+            </form>
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Отмена</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-md-5">
+                @if (Model.Images.Any())
+                {
+                    <img src="@Model.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl"
+                         alt="@Model.Name"
+                         class="product-delete-image" />
+                }
+                else
+                {
+                    <div class="product-delete-image-empty">
+                        <span class="text-muted">Нет изображения</span>
+                    </div>
+                }
+            </div>
+            <div class="col-md-7">
+                <dl class="product-delete-info">
+                    <dt>Артикул</dt>
+                    <dd>@(Model.Article ?? "—")</dd>
+
+                    <dt>Название</dt>
+                    <dd>@Model.Name</dd>
+
+                    <dt>Категория</dt>
+                    <dd>@Model.Category?.Name</dd>
+
+                    <dt>Цена</dt>
+                    <dd>
+                        @Model.Price.ToString("N0") ₽
+                        @if (Model.OldPrice.HasValue && Model.OldPrice > Model.Price)
+                        {
+                            <span class="text-decoration-line-through text-muted ms-2">@Model.OldPrice.Value.ToString("N0") ₽</span>
+                        }
+                    </dd>
+
+                    <dt>Статус</dt>
+                    <dd>
+                        @if (Model.IsActive)
+                        {
+                            <span class="status-badge status-active">Активен</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge status-inactive">Скрыт</span>
+                        }
+                    </dd>
+
+                    @if (Model.Sizes.Any())
+                    {
+                        <dt>Размеры</dt>
+                        <dd>
+                            @foreach (var size in Model.Sizes.OrderBy(s => s.Size))
+                            {
+                                <span class="size-badge @(size.IsAvailable ? "size-available" : "size-unavailable")">@size.Size</span>
+                            }
+                        </dd>
+                    }
+                </dl>
+
+                <form asp-action="Delete">
+                    <input type="hidden" asp-for="Id" />
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-danger rounded-pill px-4">Удалить</button>
+                        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+    <div class="mt-4">
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">← Назад к списку</a>
+    </div>
+</div>
+
+<style>
+    /* ================================================================
+           TAIGI — УДАЛЕНИЕ ТОВАРА
+           ================================================================ */
+
+    .page-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: 0.5px;
+    }
+
+    .page-divider {
+        border-color: #e8e7e4;
+        margin: 12px 0 24px;
+    }
+
+    .product-delete-image {
+        width: 100%;
+        max-height: 250px;
+        object-fit: contain;
+        background: #f5f5f5;
+        border: 1px solid #f0eeeb;
+        padding: 12px;
+    }
+
+    .product-delete-image-empty {
+        width: 100%;
+        height: 200px;
+        background: #f5f5f5;
+        border: 1px solid #f0eeeb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .product-delete-info {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        gap: 4px 16px;
+        font-size: 14px;
+    }
+
+        .product-delete-info dt {
+            font-weight: 600;
+            color: #888;
+            margin: 0;
+        }
+
+        .product-delete-info dd {
+            margin: 0;
+            color: #1a1a1a;
+        }
+
+    .alert-danger-custom {
+        padding: 20px 24px;
+        background: #fbe9e7;
+        border-left: 3px solid #c62828;
+        margin-bottom: 20px;
+    }
+
+    .alert-warning-custom {
+        padding: 20px 24px;
+        background: #fff8e1;
+        border-left: 3px solid #f59e0b;
+        margin-bottom: 20px;
+    }
+
+    .alert-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+    }
+
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 8px 24px;
+        transition: background 0.2s;
+        border-radius: 50px;
+        color: #fff;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border: none;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 8px 24px;
+        transition: background 0.2s;
+        border-radius: 50px;
+        color: #fff;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-danger:hover {
+            background-color: #c62828;
+            color: #fff;
+        }
+
+    .btn-outline-secondary {
+        border: 1px solid #ddd;
+        color: #999;
+        background: transparent;
+        font-weight: 500;
+        font-size: 14px;
+        padding: 8px 24px;
+        transition: all 0.2s;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-outline-secondary:hover {
+            border-color: #1a1a1a;
+            color: #1a1a1a;
+        }
+
+    .status-badge {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 2px 14px;
+        border-radius: 50px;
+        display: inline-block;
+    }
+
+    .status-active {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .status-inactive {
+        background: #f5f5f5;
+        color: #999;
+    }
+
+    .size-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 50px;
+        border: 1px solid #ddd;
+        min-width: 28px;
+        text-align: center;
+        margin: 2px;
+    }
+
+    .size-available {
+        background: #1a1a1a;
+        color: #fff;
+        border-color: #1a1a1a;
+    }
+
+    .size-unavailable {
+        background: #fff;
+        color: #999;
+        border-color: #ddd;
+    }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .product-delete-info {
+            grid-template-columns: 80px 1fr;
+            font-size: 13px;
+        }
+
+        .btn-dark,
+        .btn-danger,
+        .btn-outline-secondary {
+            font-size: 12px;
+            padding: 6px 16px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .page-title {
+            font-size: 18px;
+        }
+
+        .product-delete-info {
+            grid-template-columns: 1fr;
+            gap: 2px;
+        }
+
+            .product-delete-info dt {
+                margin-top: 8px;
+            }
+
+            .product-delete-info dd {
+                margin-bottom: 4px;
+            }
+
+        .btn-dark,
+        .btn-danger,
+        .btn-outline-secondary {
+            font-size: 11px;
+            padding: 5px 12px;
+        }
+
+        .alert-danger-custom,
+        .alert-warning-custom {
+            padding: 16px;
+        }
+    }
+</style>

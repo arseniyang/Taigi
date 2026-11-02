@@ -1,0 +1,877 @@
+﻿@model CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Оформление заказа";
+    var subtotal = Model.Cart?.CartItems.Sum(ci => ci.Product.Price * ci.Quantity) ?? 0;
+    var discountAmount = Model.DiscountAmount ?? 0;
+    var total = subtotal - discountAmount;
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- ===== ЛЕВАЯ КОЛОНКА: ФОРМА ===== -->
+        <div class="col-lg-8">
+            <div class="checkout-card">
+                <h2 class="checkout-title">Оформление заказа</h2>
+
+                <!--  @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">
+                        @Html.Raw(TempData["Error"])
+                    </div>
+                }
+-->
+
+                <form asp-action="Checkout" method="post" id="checkoutForm">
+                    @Html.AntiForgeryToken()
+
+                    <!-- ======================================== -->
+                    <!-- 1. СПОСОБ ДОСТАВКИ                       -->
+                    <!-- ======================================== -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">Способ получения</h3>
+
+                        <div class="delivery-toggle">
+                            <label class="delivery-option @(Model.DeliveryType == "delivery" ? "active" : "")">
+                                <input type="radio" name="DeliveryType" value="delivery"
+                                @(Model.DeliveryType == "delivery" ? "checked" : "")
+                                       data-toggle="delivery-fields" />
+                                <span class="delivery-option-icon">🚚</span>
+                                <span class="delivery-option-label">Доставка</span>
+                            </label>
+                            <label class="delivery-option @(Model.DeliveryType == "pickup" ? "active" : "")">
+                                <input type="radio" name="DeliveryType" value="pickup"
+                                @(Model.DeliveryType == "pickup" ? "checked" : "")
+                                       data-toggle="pickup-fields" />
+                                <span class="delivery-option-icon">📍</span>
+                                <span class="delivery-option-label">Самовывоз</span>
+                            </label>
+                        </div>
+                        <span asp-validation-for="DeliveryType" class="text-danger"></span>
+                    </div>
+
+                    <!-- ======================================== -->
+                    <!-- 2. АДРЕС ДОСТАВКИ (показывается для delivery) -->
+                    <!-- ======================================== -->
+                    <div class="form-section delivery-fields" id="delivery-fields"
+                         style="@(Model.DeliveryType == "delivery" ? "display:block" : "display:none")">
+                        <h3 class="form-section-title">Адрес доставки</h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="City" class="form-label">Город <span class="text-danger">*</span></label>
+                                <input asp-for="City" class="form-control" placeholder="Например: Москва" />
+                                <span asp-validation-for="City" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Street" class="form-label">Улица <span class="text-danger">*</span></label>
+                                <input asp-for="Street" class="form-control" placeholder="Например: Тверская" />
+                                <span asp-validation-for="Street" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="House" class="form-label">Дом <span class="text-danger">*</span></label>
+                                <input asp-for="House" class="form-control" placeholder="12" />
+                                <span asp-validation-for="House" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Apartment" class="form-label">Квартира</label>
+                                <input asp-for="Apartment" class="form-control" placeholder="45" />
+                                <span asp-validation-for="Apartment" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Entrance" class="form-label">Подъезд</label>
+                                <input asp-for="Entrance" class="form-control" placeholder="2" />
+                                <span asp-validation-for="Entrance" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Floor" class="form-label">Этаж</label>
+                                <input asp-for="Floor" class="form-control" placeholder="5" />
+                                <span asp-validation-for="Floor" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="IntercomCode" class="form-label">Код домофона</label>
+                                <input asp-for="IntercomCode" class="form-control" placeholder="1234" />
+                                <span asp-validation-for="IntercomCode" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ======================================== -->
+                    <!-- 3. ПУНКТЫ САМОВЫВОЗА (показывается для pickup) -->
+                    <!-- ======================================== -->
+                    <div class="form-section pickup-fields" id="pickup-fields"
+                         style="@(Model.DeliveryType == "pickup" ? "display:block" : "display:none")">
+                        <h3 class="form-section-title">Выберите пункт самовывоза</h3>
+
+                        @if (Model.PickupPoints != null && Model.PickupPoints.Any())
+                        {
+                            <div class="pickup-list">
+                                @foreach (var point in Model.PickupPoints)
+                                {
+                                    <label class="pickup-item @(Model.PickupPointId == point.Id ? "active" : "")">
+                                        <input type="radio" name="PickupPointId" value="@point.Id"
+                                        @(Model.PickupPointId == point.Id ? "checked" : "") />
+                                        <div class="pickup-item-content">
+                                            <div class="pickup-item-name">@point.Name</div>
+                                            <div class="pickup-item-address">📍 @point.Address</div>
+                                            @if (!string.IsNullOrEmpty(point.Metro))
+                                            {
+                                                <div class="pickup-item-metro">🚇 @point.Metro</div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(point.WorkHours))
+                                            {
+                                                <div class="pickup-item-hours">🕐 @point.WorkHours</div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(point.Phone))
+                                            {
+                                                <div class="pickup-item-phone">📞 @point.Phone</div>
+                                            }
+                                        </div>
+                                    </label>
+                                }
+                            </div>
+                            <span asp-validation-for="PickupPointId" class="text-danger"></span>
+                        }
+                        else
+                        {
+                            <p class="text-muted">Пункты самовывоза временно недоступны. Выберите доставку.</p>
+                        }
+                    </div>
+
+                    <!-- ======================================== -->
+                    <!-- 4. КОНТАКТНЫЕ ДАННЫЕ                      -->
+                    <!-- ======================================== -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">Контактные данные</h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="ReceiverName" class="form-label">ФИО получателя <span class="text-danger">*</span></label>
+                                <input asp-for="ReceiverName" class="form-control" placeholder="Иванов Иван Иванович" />
+                                <span asp-validation-for="ReceiverName" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ReceiverPhone" class="form-label">Телефон <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <input asp-for="ReceiverPhone" class="form-control" placeholder="+7 (999) 123-45-67" id="ReceiverPhone" />
+                                    @if (Model.IsPhoneFromProfile)
+                                    {
+                                        <button type="button" class="btn btn-outline-secondary" id="useProfilePhone" title="Использовать телефон из профиля">
+                                            <i class="bi bi-person"></i>
+                                        </button>
+                                    }
+                                </div>
+                                <span asp-validation-for="ReceiverPhone" class="text-danger"></span>
+                                @if (Model.IsPhoneFromProfile)
+                                {
+                                    <small class="text-muted">Телефон из вашего профиля: <strong>@Model.ReceiverPhone</strong></small>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" placeholder="example@mail.ru" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                            <small class="text-muted">На этот адрес придёт подтверждение заказа</small>
+                        </div>
+                    </div>
+
+                    <!-- ======================================== -->
+                    <!-- 5. ДОПОЛНИТЕЛЬНО                         -->
+                    <!-- ======================================== -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">Дополнительно</h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="DeliveryDate" class="form-label">Желаемая дата доставки</label>
+                                <input asp-for="DeliveryDate" class="form-control" type="date" min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                                <span asp-validation-for="DeliveryDate" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="DeliveryTimeFrom" class="form-label">Время с</label>
+                                <input asp-for="DeliveryTimeFrom" class="form-control" type="time" />
+                                <span asp-validation-for="DeliveryTimeFrom" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-3">
+                                <label asp-for="DeliveryTimeTo" class="form-label">Время до</label>
+                                <input asp-for="DeliveryTimeTo" class="form-control" type="time" />
+                                <span asp-validation-for="DeliveryTimeTo" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label asp-for="Comment" class="form-label">Комментарий к заказу</label>
+                            <textarea asp-for="Comment" class="form-control" rows="3" placeholder="Дополнительные пожелания..."></textarea>
+                            <span asp-validation-for="Comment" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <!-- ======================================== -->
+                    <!-- 6. ЮРИДИЧЕСКИЕ СОГЛАСИЯ                  -->
+                    <!-- ======================================== -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">Подтверждение условий</h3>
+                        <p class="text-muted small mb-3">
+                            Для оформления заказа необходимо принять следующие условия
+                        </p>
+
+                        <div class="form-group form-check mb-2">
+                            <input class="form-check-input" type="checkbox" asp-for="AgreeToTerms" id="AgreeToTerms" />
+                            <input type="hidden" asp-for="AgreeToTerms" value="false" />
+                            <label class="form-check-label" for="AgreeToTerms" style="font-size: 14px;">
+                                Я подтверждаю согласие с условиями <a href="/legal/oferta" target="_blank" class="text-dark">публичной оферты</a>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <span asp-validation-for="AgreeToTerms" class="text-danger d-block" style="font-size: 13px;"></span>
+                        </div>
+
+                        <div class="form-group form-check">
+                            <input class="form-check-input" type="checkbox" asp-for="AgreeToOrderProcessing" id="AgreeToOrderProcessing" />
+                            <input type="hidden" asp-for="AgreeToOrderProcessing" value="false" />
+                            <label class="form-check-label" for="AgreeToOrderProcessing" style="font-size: 14px;">
+                                Я даю согласие на <a href="/legal/privacy" target="_blank" class="text-dark">обработку персональных данных</a> для выполнения заказа
+                                <span class="text-danger">*</span>
+                            </label>
+                            <span asp-validation-for="AgreeToOrderProcessing" class="text-danger d-block" style="font-size: 13px;"></span>
+                        </div>
+
+                        <p class="text-muted small mt-2 mb-0">
+                            <span class="text-danger">*</span> — поля, обязательные для заполнения
+                        </p>
+                    </div>
+
+                    <!-- ===== КНОПКА ОТПРАВКИ (на мобильных) ===== -->
+                    <div class="d-md-none mt-4">
+                        <button type="submit" class="btn btn-dark btn-lg w-100 rounded-pill py-3">
+                            Подтвердить заказ — @total.ToString("N0") ₽
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ===== ПРАВАЯ КОЛОНКА: ИТОГО ===== -->
+        <div class="col-lg-4">
+            <div class="order-summary-card">
+                <h3 class="order-summary-title">Ваш заказ</h3>
+
+                @if (Model.Cart != null && Model.Cart.CartItems.Any())
+                {
+                    <div class="order-items">
+                        @foreach (var item in Model.Cart.CartItems)
+                        {
+                            <div class="order-item">
+                                <div class="order-item-image">
+                                    @if (item.Product.Images != null && item.Product.Images.Any())
+                                    {
+                                        <img src="@item.Product.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl" alt="@item.Product.Name" />
+                                    }
+                                    else
+                                    {
+                                        <div class="order-item-no-image">Нет фото</div>
+                                    }
+                                </div>
+                                <div class="order-item-info">
+                                    <div class="order-item-name">@item.Product.Name</div>
+                                    <div class="order-item-size">Размер: @(item.Size ?? "OneSize")</div>
+                                    <div class="order-item-quantity">@item.Quantity шт. × @item.Product.Price.ToString("N0") ₽</div>
+                                </div>
+                                <div class="order-item-total">
+                                    @((item.Product.Price * item.Quantity).ToString("N0")) ₽
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="order-summary-totals">
+                        <div class="summary-row">
+                            <span>Товары</span>
+                            <span>@subtotal.ToString("N0") ₽</span>
+                        </div>
+
+                        @if (discountAmount > 0)
+                        {
+                            <div class="summary-row summary-discount">
+                                <span>Скидка</span>
+                                <span>-@discountAmount.ToString("N0") ₽</span>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(Model.PromoCode))
+                        {
+                            <div class="summary-row summary-promo">
+                                <span>Промокод</span>
+                                <span class="promo-code-badge">@Model.PromoCode</span>
+                            </div>
+                        }
+
+                        <div class="summary-row summary-total">
+                            <span>Итого</span>
+                            <span>@total.ToString("N0") ₽</span>
+                        </div>
+                    </div>
+
+                    <!-- ===== КНОПКА ОТПРАВКИ (на десктопе) ===== -->
+                    <button type="submit" form="checkoutForm" class="btn btn-dark btn-lg w-100 rounded-pill py-3 mt-3 d-none d-md-block">
+                        Подтвердить заказ — @total.ToString("N0") ₽
+                    </button>
+
+                    <p class="text-muted text-center mt-2 small">
+                        <i class="bi bi-lock"></i> Ваши данные защищены
+                    </p>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">Корзина пуста</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ================================================================ */
+    /* CHECKOUT — СТРАНИЦА ОФОРМЛЕНИЯ ЗАКАЗА                          */
+    /* ================================================================ */
+
+    .checkout-card {
+        background: #fff;
+        border: 1px solid #f0eeeb;
+        padding: 32px 28px;
+        border-radius: 0;
+    }
+
+    .checkout-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 28px;
+        letter-spacing: 0.5px;
+    }
+
+    /* ---------- СЕКЦИИ ФОРМЫ ---------- */
+    .form-section {
+        border-bottom: 1px solid #f0eeeb;
+        padding-bottom: 28px;
+        margin-bottom: 28px;
+    }
+
+        .form-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+    .form-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 18px;
+        letter-spacing: 0.3px;
+    }
+
+    /* ---------- ПЕРЕКЛЮЧАТЕЛЬ ДОСТАВКИ ---------- */
+    .delivery-toggle {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .delivery-option {
+        flex: 1;
+        min-width: 140px;
+        padding: 14px 20px;
+        border: 2px solid #e8e7e4;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        border-radius: 0;
+        margin: 0;
+    }
+
+        .delivery-option:hover {
+            border-color: #ccc;
+        }
+
+        .delivery-option.active {
+            border-color: #1a1a1a;
+            background: #f8f7f5;
+        }
+
+        .delivery-option input[type="radio"] {
+            display: none;
+        }
+
+    .delivery-option-icon {
+        font-size: 22px;
+    }
+
+    .delivery-option-label {
+        font-weight: 500;
+        font-size: 15px;
+        color: #1a1a1a;
+    }
+
+    /* ---------- ПУНКТЫ САМОВЫВОЗА ---------- */
+    .pickup-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .pickup-item {
+        display: block;
+        padding: 14px 18px;
+        border: 2px solid #e8e7e4;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #fff;
+        border-radius: 0;
+        margin: 0;
+    }
+
+        .pickup-item:hover {
+            border-color: #ccc;
+        }
+
+        .pickup-item.active {
+            border-color: #1a1a1a;
+            background: #f8f7f5;
+        }
+
+        .pickup-item input[type="radio"] {
+            display: none;
+        }
+
+    .pickup-item-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .pickup-item-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #1a1a1a;
+    }
+
+    .pickup-item-address {
+        font-size: 13px;
+        color: #555;
+    }
+
+    .pickup-item-metro,
+    .pickup-item-hours,
+    .pickup-item-phone {
+        font-size: 12px;
+        color: #888;
+    }
+
+    /* ---------- ПРАВАЯ КОЛОНКА ---------- */
+    .order-summary-card {
+        background: #f8f7f5;
+        padding: 28px 24px;
+        border: 1px solid #f0eeeb;
+        border-radius: 0;
+        position: sticky;
+        top: 24px;
+    }
+
+    .order-summary-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+        letter-spacing: 0.3px;
+    }
+
+    .order-items {
+        max-height: 320px;
+        overflow-y: auto;
+        margin-bottom: 18px;
+    }
+
+    .order-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+    .order-item-image {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+        background: #eee;
+        overflow: hidden;
+    }
+
+        .order-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .order-item-no-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        color: #999;
+        text-align: center;
+        background: #f5f5f5;
+    }
+
+    .order-item-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .order-item-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #1a1a1a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .order-item-size {
+        font-size: 11px;
+        color: #888;
+    }
+
+    .order-item-quantity {
+        font-size: 11px;
+        color: #888;
+    }
+
+    .order-item-total {
+        font-weight: 600;
+        font-size: 14px;
+        color: #1a1a1a;
+        white-space: nowrap;
+    }
+
+    /* ---------- ИТОГИ ---------- */
+    .order-summary-totals {
+        border-top: 1px solid #e0dedb;
+        padding-top: 16px;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .summary-discount {
+        color: #2e7d32;
+        font-weight: 500;
+    }
+
+    .summary-promo .promo-code-badge {
+        background: #1a1a1a;
+        color: #fff;
+        padding: 1px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        border-radius: 0;
+    }
+
+    .summary-total {
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a1a;
+        border-top: 2px solid #e0dedb;
+        padding-top: 12px;
+        margin-top: 4px;
+    }
+
+    /* ---------- АДАПТИВ ---------- */
+    @@media (max-width: 768px) {
+        .checkout-card {
+            padding: 18px 14px;
+        }
+
+        .checkout-title {
+            font-size: 20px;
+        }
+
+        .delivery-option {
+            min-width: 100px;
+            padding: 10px 14px;
+        }
+
+        .delivery-option-label {
+            font-size: 13px;
+        }
+
+        .order-summary-card {
+            padding: 18px 14px;
+            position: static;
+        }
+
+        .order-item-name {
+            font-size: 12px;
+        }
+
+        .order-item-total {
+            font-size: 13px;
+        }
+
+        .summary-total {
+            font-size: 16px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .delivery-toggle {
+            flex-direction: column;
+        }
+
+        .delivery-option {
+            min-width: unset;
+            width: 100%;
+        }
+
+        .pickup-item {
+            padding: 10px 14px;
+        }
+
+        .pickup-item-name {
+            font-size: 13px;
+        }
+
+        .pickup-item-address {
+            font-size: 12px;
+        }
+    }
+
+    /* ---------- УТИЛИТЫ ---------- */
+    .text-danger {
+        color: #c62828 !important;
+    }
+
+    .text-muted {
+        color: #999 !important;
+    }
+
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        border-radius: 50px !important;
+        font-weight: 500;
+        font-size: 15px;
+        transition: background 0.2s;
+        color: #fff;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    .btn-outline-secondary {
+        border-radius: 0;
+        border-color: #ddd;
+        color: #555;
+    }
+
+        .btn-outline-secondary:hover {
+            background: #f0eeeb;
+            border-color: #ccc;
+        }
+
+    .form-control {
+        border-radius: 0;
+        border-color: #e0dedb;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+    }
+
+        .form-control:focus {
+            border-color: #1a1a1a;
+            box-shadow: none;
+        }
+
+    .form-label {
+        font-weight: 500;
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 4px;
+    }
+
+    .input-group .btn {
+        border-radius: 0;
+        border-color: #e0dedb;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // ================================================================
+        // 1. ПЕРЕКЛЮЧЕНИЕ МЕЖДУ ДОСТАВКОЙ И САМОВЫВОЗОМ
+        // ================================================================
+        const deliveryRadios = document.querySelectorAll('input[name="DeliveryType"]');
+        const deliveryFields = document.getElementById('delivery-fields');
+        const pickupFields = document.getElementById('pickup-fields');
+
+        function toggleDeliveryFields() {
+            const selected = document.querySelector('input[name="DeliveryType"]:checked');
+            if (!selected) return;
+
+            const isDelivery = selected.value === 'delivery';
+
+            deliveryFields.style.display = isDelivery ? 'block' : 'none';
+            pickupFields.style.display = isDelivery ? 'none' : 'block';
+
+            document.querySelectorAll('.delivery-option').forEach(el => {
+                el.classList.remove('active');
+            });
+            selected.closest('.delivery-option')?.classList.add('active');
+        }
+
+        deliveryRadios.forEach(radio => {
+            radio.addEventListener('change', toggleDeliveryFields);
+        });
+
+        toggleDeliveryFields();
+
+        // ================================================================
+        // 2. АВТОПОДСТАНОВКА ТЕЛЕФОНА ИЗ ПРОФИЛЯ
+        // ================================================================
+        const useProfileBtn = document.getElementById('useProfilePhone');
+        const phoneInput = document.getElementById('ReceiverPhone');
+
+        if (useProfileBtn && phoneInput) {
+            useProfileBtn.addEventListener('click', function() {
+                const profilePhone = '@Model.ReceiverPhone';
+                if (profilePhone) {
+                    phoneInput.value = profilePhone;
+                    phoneInput.style.borderColor = '#2e7d32';
+                    setTimeout(() => {
+                        phoneInput.style.borderColor = '';
+                    }, 2000);
+                }
+            });
+        }
+
+        // ================================================================
+        // 3. ВАЛИДАЦИЯ ПЕРЕД ОТПРАВКОЙ
+        // ================================================================
+        const form = document.getElementById('checkoutForm');
+
+        form.addEventListener('submit', function(e) {
+            const deliveryType = document.querySelector('input[name="DeliveryType"]:checked');
+
+            if (!deliveryType) {
+                e.preventDefault();
+                showNotification('Выберите способ получения заказа');
+                return;
+            }
+
+            if (deliveryType.value === 'delivery') {
+                const city = document.querySelector('input[name="City"]');
+                const street = document.querySelector('input[name="Street"]');
+                const house = document.querySelector('input[name="House"]');
+
+                if (!city.value.trim()) {
+                    e.preventDefault();
+                    city.focus();
+                    showNotification('Укажите город');
+                    return;
+                }
+                if (!street.value.trim()) {
+                    e.preventDefault();
+                    street.focus();
+                    showNotification('Укажите улицу');
+                    return;
+                }
+                if (!house.value.trim()) {
+                    e.preventDefault();
+                    house.focus();
+                    showNotification('Укажите номер дома');
+                    return;
+                }
+            }
+
+            if (deliveryType.value === 'pickup') {
+                const pickupSelected = document.querySelector('input[name="PickupPointId"]:checked');
+                if (!pickupSelected) {
+                    e.preventDefault();
+                    showNotification('Выберите пункт самовывоза');
+                    return;
+                }
+            }
+
+            const phone = document.querySelector('input[name="ReceiverPhone"]');
+            if (!phone.value.trim() || phone.value.trim().length < 10) {
+                e.preventDefault();
+                phone.focus();
+                showNotification('Введите корректный номер телефона');
+                return;
+            }
+
+            const name = document.querySelector('input[name="ReceiverName"]');
+            if (!name.value.trim() || name.value.trim().length < 2) {
+                e.preventDefault();
+                name.focus();
+                showNotification('Введите ФИО получателя');
+                return;
+            }
+
+            // ============================================================
+            // ===== ПРОВЕРКА ЧЕКБОКСОВ СОГЛАСИЙ =====
+            // ============================================================
+            const agreeTerms = document.querySelector('input[name="AgreeToTerms"]');
+            const agreeProcessing = document.querySelector('input[name="AgreeToOrderProcessing"]');
+
+            if (!agreeTerms || !agreeTerms.checked) {
+                e.preventDefault();
+                document.getElementById('AgreeToTerms').focus();
+                showNotification('Необходимо подтвердить согласие с условиями публичной оферты');
+                return;
+            }
+
+            if (!agreeProcessing || !agreeProcessing.checked) {
+                e.preventDefault();
+                document.getElementById('AgreeToOrderProcessing').focus();
+                showNotification('Необходимо дать согласие на обработку персональных данных');
+                return;
+            }
+        });
+
+        // ================================================================
+        // 4. КЛИК ПО ПУНКТУ САМОВЫВОЗА (выделение)
+        // ================================================================
+        document.querySelectorAll('.pickup-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    document.querySelectorAll('.pickup-item').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+    });
+</script>

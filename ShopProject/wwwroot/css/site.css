@@ -1,0 +1,2025 @@
+/* ================================================================
+   БАЗОВЫЕ СТИЛИ
+   ================================================================ */
+
+html {
+    font-size: 14px;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    background: #f8f7f5;
+    color: #1a1a1a;
+}
+
+.taigi-main {
+    min-height: 70vh;
+    flex: 1 0 auto;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+/* ================================================================
+   КНОПКИ
+   ================================================================ */
+
+.btn-dark {
+    background-color: #1a1a1a;
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: background 0.2s ease;
+    border-radius: 50px;
+}
+
+    .btn-dark:hover {
+        background-color: #333;
+    }
+
+.btn-outline-secondary {
+    font-size: 13px;
+    border-color: #ddd;
+    color: #333;
+    border-radius: 50px;
+    transition: all 0.2s ease;
+}
+
+    .btn-outline-secondary:hover {
+        background-color: #1a1a1a;
+        color: #fff;
+        border-color: #1a1a1a;
+    }
+
+/* ================================================================
+   ХЛЕБНЫЕ КРОШКИ
+   ================================================================ */
+
+.breadcrumb-item a {
+    color: #666;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+    .breadcrumb-item a:hover {
+        color: #1a1a1a;
+    }
+
+.breadcrumb-item.active {
+    color: #1a1a1a;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* ================================================================
+   ПАГИНАЦИЯ
+   ================================================================ */
+
+.page-item.active .page-link {
+    background-color: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+}
+
+.page-link {
+    color: #1a1a1a;
+    border-radius: 0;
+}
+
+    .page-link:hover {
+        color: #1a1a1a;
+        background-color: #f0f0f0;
+    }
+
+/* ================================================================
+   TAIGI — ШАПКА
+   ================================================================ */
+
+.taigi-header {
+    background: #0d0d0d;
+    border-bottom: 1px solid #1a1a1a;
+    position: sticky;
+    top: 0;
+    z-index: 1050;
+}
+
+.taigi-logo {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.taigi-logo-icon {
+    font-size: 22px;
+}
+
+.taigi-logo-text {
+    font-size: 24px;
+    font-weight: 450; /* Тонкий шрифт */
+    color: #fff;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+.taigi-logo-sub {
+    font-size: 10px;
+    font-weight: 300;
+    color: gray;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-left: 4px;
+}
+
+.taigi-nav-link {
+    font-size: 13px;
+    font-weight: 400;
+    color: #999;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+}
+
+    .taigi-nav-link:hover {
+        color: #fff;
+    }
+    .taigi-nav-link.active {
+        color: #fff;
+        border-bottom-color: #fff; /* Белое подчёркивание вместо зелёного */
+    }
+
+.taigi-cart {
+    position: relative;
+    color: #ccc;
+    text-decoration: none;
+    font-size: 22px;
+    transition: color 0.2s ease;
+}
+
+    .taigi-cart:hover {
+        color: #fff;
+    }
+
+.taigi-cart-icon {
+    display: block;
+}
+
+.taigi-cart-badge {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    background: #2d7d46;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+.taigi-profile-btn {
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+    .taigi-profile-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .taigi-profile-btn i {
+        font-size: 20px;
+    }
+
+.taigi-auth-link {
+    color: #999;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+    .taigi-auth-link:hover {
+        color: #fff;
+    }
+
+.taigi-divider {
+    width: 1px;
+    height: 24px;
+    background: #2a2a2a;
+}
+
+.taigi-dropdown-menu {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 8px 0;
+    min-width: 200px;
+}
+
+    .taigi-dropdown-menu .dropdown-item {
+        color: #ccc;
+        font-size: 13px;
+        padding: 8px 20px;
+        transition: all 0.15s ease;
+        font-weight: 400;
+    }
+
+        .taigi-dropdown-menu .dropdown-item:hover {
+            background: #2d7d46;
+            color: #fff;
+        }
+
+    .taigi-dropdown-menu .dropdown-divider {
+        border-color: #2a2a2a;
+    }
+
+.taigi-burger {
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 28px;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s ease;
+}
+
+    .taigi-burger:hover {
+        color: #fff;
+    }
+
+.taigi-mobile-menu {
+    padding: 16px 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.taigi-mobile-link {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    padding: 6px 0;
+    transition: color 0.2s ease;
+}
+
+    .taigi-mobile-link:hover {
+        color: #fff;
+    }
+
+.taigi-mobile-menu hr {
+    border-color: #2a2a2a;
+    margin: 8px 0;
+}
+
+/* ================================================================
+   TAIGI — ПОДВАЛ
+   ================================================================ */
+
+.taigi-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+    background: #0d0d0d;
+    color: #999;
+    border-top: 2px solid #2d7d46;
+    width: 100%;
+}
+
+.taigi-footer-title {
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+}
+
+.taigi-footer-text {
+    color: #888;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.taigi-footer-link {
+    color: #888;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.25s ease;
+    display: inline-block;
+    padding: 4px 0;
+}
+
+    .taigi-footer-link:hover {
+        color: #4a8c5c;
+        transform: translateX(4px);
+    }
+
+.taigi-social {
+    color: #666;
+    font-size: 20px;
+    transition: all 0.25s ease;
+    text-decoration: none;
+}
+
+    .taigi-social:hover {
+        color: #4a8c5c;
+        transform: translateY(-2px);
+    }
+
+.taigi-copyright {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 13px;
+    color: #666;
+}
+
+/* ================================================================
+   TAIGI — КАРТОЧКИ ТОВАРОВ (ГЛАВНАЯ, КАТАЛОГ)
+   ================================================================ */
+
+.taigi-product-card {
+    background: #fff;
+    border: none;
+    border-radius: 0;
+    overflow: hidden;
+    transition: transform 0.25s ease;
+    height: 100%;
+}
+
+    .taigi-product-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .taigi-product-card img {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        background: #f5f5f5;
+    }
+
+.taigi-product-card-noimg {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    font-size: 13px;
+}
+
+.taigi-product-card-body {
+    padding: 14px 12px 18px;
+    text-align: center;
+}
+
+.taigi-product-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 34px;
+    letter-spacing: 0.3px;
+}
+
+.taigi-product-card-price {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+}
+
+.taigi-product-badge {
+    display: inline-block;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 12px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.taigi-product-link {
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.2s ease;
+}
+
+    .taigi-product-link:hover {
+        color: #1a1a1a;
+    }
+
+/* ================================================================
+   TAIGI — КОРЗИНА
+   ================================================================ */
+
+.cart-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+}
+
+.cart-count {
+    font-size: 14px;
+    color: #999;
+    font-weight: 500;
+}
+
+.cart-item {
+    background: #fff;
+    padding: 16px 0;
+    border-bottom: 1px solid #f0eeeb;
+}
+
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+
+.cart-item-unavailable {
+    opacity: 0.6;
+}
+
+    .cart-item-unavailable .cart-item-name {
+        text-decoration: line-through;
+        color: #999;
+    }
+
+.cart-item-img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    background: #f5f5f5;
+}
+
+.cart-item-img-placeholder {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-item-info {
+    padding: 0 12px;
+}
+
+.cart-item-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+}
+
+    .cart-item-name a {
+        color: #1a1a1a;
+        text-decoration: none;
+    }
+
+        .cart-item-name a:hover {
+            color: #1a1a1a;
+        }
+
+.cart-item-meta {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 4px;
+}
+
+.cart-item-price {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.cart-qty-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cart-qty-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    padding: 0;
+}
+
+    .cart-qty-btn:hover {
+        border-color: #1a1a1a;
+        background: #1a1a1a;
+        color: #fff;
+    }
+
+    .cart-qty-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+.cart-qty-number {
+    min-width: 28px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.cart-item-subtotal {
+    font-weight: 700;
+    font-size: 16px;
+    min-width: 80px;
+    text-align: right;
+}
+
+.cart-remove-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 16px;
+    transition: color 0.2s ease;
+    cursor: pointer;
+    padding: 4px;
+}
+
+    .cart-remove-btn:hover {
+        color: #dc3545;
+    }
+
+.cart-summary {
+    background: #f8f7f5;
+    padding: 28px 24px;
+    border: 1px solid #e8e7e4;
+}
+
+.cart-summary-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+}
+
+.cart-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.cart-divider {
+    border-color: #e0ddd8;
+    margin: 14px 0;
+}
+
+.cart-summary-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.cart-promo-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.cart-promo-input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid #ddd;
+    border-radius: 50px;
+    font-size: 13px;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+    .cart-promo-input:focus {
+        border-color: #1a1a1a;
+    }
+
+.cart-promo-btn {
+    padding: 10px 20px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+    .cart-promo-btn:hover {
+        background: #333;
+    }
+
+.cart-promo-error {
+    color: #dc3545;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.cart-promo-success {
+    color: #2e7d32;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.cart-promo-applied {
+    background: #e8f5e9;
+    padding: 10px 14px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #2e7d32;
+    margin-bottom: 8px;
+}
+
+.cart-promo-remove {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+    .cart-promo-remove:hover {
+        color: #dc3545;
+    }
+
+.cart-checkout-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 0;
+    margin-top: 20px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+}
+
+    .cart-checkout-btn:hover {
+        background: #333;
+        color: #fff;
+    }
+
+    .cart-checkout-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+/* ================================================================
+   TAIGI — ГЛАВНАЯ
+   ================================================================ */
+
+.taigi-top-menu {
+    background: #DCDCDC;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.taigi-top-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: #999;
+    text-decoration: none;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+    .taigi-top-link:hover,
+    .taigi-top-link.active {
+        color: #1a1a1a;
+        border-bottom-color: #1a1a1a;
+    }
+/* ================================================================ */
+/* TAIGI — БАННЕР (HERO)                                            */
+/* ================================================================ */
+
+.taigi-hero {
+    background: #1a1a1a;
+    overflow: hidden;
+    position: relative;
+    min-height: 560px;
+    display: flex;
+    align-items: center;
+}
+
+.taigi-hero-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+    .taigi-hero-bg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+.taigi-hero-bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0) 100%);
+    z-index: 1;
+}
+
+.taigi-hero-wrapper {
+    position: relative;
+    z-index: 2;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 64px;
+    width: 100%;
+}
+
+.taigi-hero-content {
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+.taigi-hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    padding: 4px 16px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    width: fit-content;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.taigi-hero-title {
+    font-size: 56px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    margin: 0 0 12px 0;
+}
+
+    .taigi-hero-title span {
+        color: #e8e7e4;
+        font-weight: 300;
+    }
+
+.taigi-hero-text {
+    font-size: 18px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.6;
+    max-width: 420px;
+    margin: 0 0 28px 0;
+    font-weight: 400;
+}
+
+.taigi-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    color: #1a1a1a;
+    border: none;
+    padding: 14px 32px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-decoration: none;
+    width: fit-content;
+    text-transform: uppercase;
+}
+
+    .taigi-hero-btn:hover {
+        background: #e8e7e4;
+        color: #1a1a1a;
+        text-decoration: none;
+        transform: translateX(4px);
+    }
+
+    .taigi-hero-btn svg {
+        transition: transform 0.25s ease;
+    }
+
+    .taigi-hero-btn:hover svg {
+        transform: translateX(4px);
+    }
+
+/* ===== АДАПТИВ ===== */
+@media (max-width: 992px) {
+    .taigi-hero {
+        min-height: 480px;
+    }
+
+    .taigi-hero-wrapper {
+        padding: 0 32px;
+    }
+
+    .taigi-hero-content {
+        max-width: 100%;
+        align-items: center;
+        text-align: center;
+        padding: 32px 0;
+    }
+
+    .taigi-hero-badge {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .taigi-hero-title {
+        font-size: 40px;
+    }
+
+    .taigi-hero-text {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .taigi-hero-btn {
+        justify-content: center;
+    }
+
+    .taigi-hero-bg-overlay {
+        background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.7) 100%);
+    }
+}
+
+@media (max-width: 768px) {
+    .taigi-hero {
+        min-height: 400px;
+    }
+
+    .taigi-hero-wrapper {
+        padding: 0 20px;
+    }
+
+    .taigi-hero-title {
+        font-size: 32px;
+    }
+
+    .taigi-hero-text {
+        font-size: 15px;
+    }
+
+    .taigi-hero-btn {
+        padding: 12px 24px;
+        font-size: 13px;
+    }
+
+    .taigi-hero-content {
+        padding: 24px 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .taigi-hero {
+        min-height: 340px;
+    }
+
+    .taigi-hero-title {
+        font-size: 26px;
+    }
+
+    .taigi-hero-text {
+        font-size: 14px;
+    }
+
+    .taigi-hero-badge {
+        font-size: 10px;
+        padding: 3px 12px;
+    }
+
+    .taigi-hero-btn {
+        padding: 10px 20px;
+        font-size: 12px;
+    }
+
+    .taigi-hero-wrapper {
+        padding: 0 16px;
+    }
+}
+
+        .taigi-section-title {
+            font-size: 16px;
+        }
+
+        .taigi-link-more {
+            font-size: 11px;
+        }
+
+        .taigi-product-card-name {
+            font-size: 11px;
+        }
+
+        .taigi-product-card-price {
+            font-size: 13px;
+        }
+
+        .taigi-feature-icon {
+            font-size: 22px;
+        }
+
+        .taigi-feature h6 {
+            font-size: 11px;
+        }
+    }
+}
+
+.taigi-section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: 2px;
+}
+
+.taigi-link-more {
+    font-size: 13px;
+    font-weight: 500;
+    color: #999;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+}
+
+    .taigi-link-more:hover {
+        color: #1a1a1a;
+    }
+
+.taigi-feature {
+    padding: 12px 0;
+}
+
+.taigi-feature-icon {
+    display: block;
+    font-size: 8px;
+    color: #ccc;
+    margin-bottom: 4px;
+}
+
+.taigi-feature h6 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.taigi-category-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 12px;
+    background: #fff;
+    border: 1px solid #f0eeeb;
+    border-radius: 0;
+    text-decoration: none;
+    color: #1a1a1a;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+    .taigi-category-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        border-color: #1a1a1a;
+        color: #1a1a1a;
+    }
+
+.taigi-category-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+}
+
+.taigi-category-card span {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ================================================================
+   РАЗМЕРЫ
+   ================================================================ */
+
+.size-btn {
+    min-width: 44px;
+    height: 44px;
+    font-size: 13px;
+    border-radius: 50px;
+}
+
+    .size-btn.btn-dark {
+        background-color: #1a1a1a;
+        color: #fff;
+        border-color: #1a1a1a;
+    }
+
+/* ================================================================
+   РЕКОМЕНДАЦИИ
+   ================================================================ */
+
+.recommendations-section {
+    background: #f3f2ef;
+    padding: 32px 0 40px;
+    margin: 40px -12px 0;
+    border-top: 1px solid #e8e7e4;
+    border-bottom: 1px solid #e8e7e4;
+}
+
+.recommendations-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+    padding-left: 12px;
+    position: relative;
+}
+
+    .recommendations-title::after {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 3px;
+        background: #2d7d46;
+        margin-top: 6px;
+    }
+
+.recommendation-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    border-radius: 0;
+    background: #fff;
+    overflow: hidden;
+    height: 100%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+    .recommendation-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .recommendation-card .card-img-top {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        background: #f5f5f5;
+    }
+
+    .recommendation-card .card-body {
+        padding: 12px 12px 16px;
+    }
+
+    .recommendation-card .card-title {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #1a1a1a;
+        min-height: 32px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .recommendation-card .price {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+    }
+
+/* ================================================================
+   АДАПТИВ
+   ================================================================ */
+
+@media (max-width: 992px) {
+    .taigi-logo-text {
+        font-size: 20px;
+        letter-spacing: 2px;
+    }
+
+    .taigi-logo-sub {
+        font-size: 9px;
+        color:gray;
+    }
+}
+
+@media (max-width: 768px) {
+    .taigi-footer .row {
+        gap: 24px 0;
+    }
+
+    .taigi-hero {
+        padding: 24px 0 40px;
+    }
+
+    .taigi-hero-title {
+        font-size: 24px;
+    }
+
+    .taigi-hero-text {
+        font-size: 14px;
+    }
+
+    .taigi-hero-btn {
+        padding: 10px 28px;
+        font-size: 13px;
+    }
+
+    .taigi-section-title {
+        font-size: 17px;
+    }
+
+    .taigi-top-link {
+        font-size: 11px;
+    }
+
+    .taigi-product-card-name {
+        font-size: 11px;
+        min-height: 28px;
+    }
+
+    .taigi-product-card-price {
+        font-size: 14px;
+    }
+
+    .cart-title {
+        font-size: 22px;
+    }
+
+    .cart-item-info {
+        padding: 0 8px;
+    }
+
+    .cart-item-name {
+        font-size: 13px;
+    }
+
+    .cart-item-price {
+        font-size: 14px;
+    }
+
+    .cart-item-subtotal {
+        font-size: 14px;
+        min-width: 60px;
+    }
+
+    .cart-summary {
+        padding: 20px 16px;
+        margin-top: 20px;
+    }
+
+    .cart-qty-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 14px;
+    }
+
+    .cart-qty-number {
+        font-size: 14px;
+        min-width: 24px;
+    }
+
+    .recommendations-section {
+        padding: 20px 0 28px;
+        margin: 30px -12px 0;
+    }
+
+    .recommendations-title {
+        font-size: 16px;
+        padding-left: 0;
+    }
+
+    .recommendation-card .card-title {
+        font-size: 11px;
+        min-height: 28px;
+    }
+
+    .recommendation-card .price {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .taigi-logo-text {
+        font-size: 17px;
+        letter-spacing: 1px;
+    }
+
+    .taigi-logo-icon {
+        font-size: 18px;
+    }
+
+    .taigi-cart {
+        font-size: 18px;
+    }
+
+    .taigi-cart-badge {
+        font-size: 8px;
+        min-width: 16px;
+        height: 16px;
+        top: -5px;
+        right: -8px;
+    }
+
+    .taigi-profile-btn span {
+        display: none;
+    }
+
+    .taigi-hero-title {
+        font-size: 20px;
+    }
+
+    .taigi-hero-image {
+        max-height: 200px;
+    }
+
+    .taigi-product-card-name {
+        font-size: 10px;
+        min-height: 24px;
+    }
+
+    .taigi-product-card-price {
+        font-size: 13px;
+    }
+
+    .taigi-feature h6 {
+        font-size: 11px;
+    }
+
+    .cart-title {
+        font-size: 18px;
+    }
+
+    .cart-item-name {
+        font-size: 12px;
+    }
+
+    .cart-item-meta {
+        font-size: 10px;
+    }
+
+    .cart-item-price {
+        font-size: 13px;
+    }
+
+    .cart-item-subtotal {
+        font-size: 13px;
+        min-width: 50px;
+    }
+
+    .cart-summary-total {
+        font-size: 16px;
+    }
+
+    .cart-checkout-btn {
+        font-size: 14px;
+        padding: 12px 0;
+    }
+
+    .cart-promo-input {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+
+    .cart-promo-btn {
+        font-size: 12px;
+        padding: 8px 14px;
+    }
+
+    .recommendations-section {
+        padding: 16px 0 20px;
+        margin: 20px -12px 0;
+    }
+
+    .recommendations-title {
+        font-size: 14px;
+    }
+
+    .recommendation-card .card-title {
+        font-size: 10px;
+        min-height: 24px;
+    }
+
+    .recommendation-card .price {
+        font-size: 13px;
+    }
+}
+
+
+
+.taigi-top-slogan {
+    font-size: 11px;
+    font-weight: 500;
+    color: #888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.taigi-top-divider {
+    color: #ddd;
+    font-size: 14px;
+}
+
+
+
+@media (max-width: 768px) {
+    .desktop-nav {
+        display: none !important;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ================================================================
+   МОБИЛЬНОЕ МЕНЮ - ВЫХОД
+   ================================================================ */
+
+.taigi-mobile-logout-form {
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+.taigi-mobile-logout-btn {
+    background: none !important;
+    border: none !important;
+    width: 100%;
+    text-align: left;
+    padding: 6px 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: #ccc;
+    transition: color 0.2s ease;
+}
+
+    .taigi-mobile-logout-btn:hover {
+        color: #ff4444; /* Красный для выхода */
+        background: none !important;
+    }
+
+    /* Если хочешь, чтобы было как остальные ссылки - без красного */
+    .taigi-mobile-logout-btn.taigi-mobile-link {
+        color: #ccc;
+    }
+
+        .taigi-mobile-logout-btn.taigi-mobile-link:hover {
+            color: #fff;
+        }
+
+
+
+
+
+
+
+/* ================================================================ */
+/* КАРТОЧКА ТОВАРА (ОБНОВЛЁННАЯ)                                   */
+/* ================================================================ */
+
+.taigi-product-card {
+    position: relative;
+    background: #fff;
+    border: 1px solid #f0eeeb;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    height: 100%;
+}
+
+    .taigi-product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+
+/* ===== КЛИКАБЕЛЬНОЕ ИЗОБРАЖЕНИЕ ===== */
+.taigi-product-image-link {
+    display: block;
+    overflow: hidden;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+    .taigi-product-image-link img {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        background: #f5f5f5;
+        transition: transform 0.4s ease;
+    }
+
+.taigi-product-card:hover .taigi-product-image-link img {
+    transform: scale(1.03);
+}
+
+.taigi-product-card-noimg {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    font-size: 13px;
+}
+
+/* ===== ИНФОРМАЦИЯ О ТОВАРЕ ===== */
+.taigi-product-card-body {
+    padding: 12px 12px 16px;
+    text-align: center;
+    position: relative;
+}
+
+.taigi-product-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 34px;
+    letter-spacing: 0.3px;
+}
+
+.taigi-product-card-price {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+}
+
+.taigi-product-badge {
+    position: absolute;
+    top: -40px;
+    right: 8px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 10px;
+    letter-spacing: 0.5px;
+}
+
+/* ===== ДЕЙСТВИЯ (кнопки) ===== */
+.taigi-product-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.taigi-product-link {
+    font-size: 11px;
+    font-weight: 600;
+    color: #999;
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.2s ease;
+}
+
+    .taigi-product-link:hover {
+        color: #1a1a1a;
+        text-decoration: none;
+    }
+
+/* ===== КНОПКА "В КОРЗИНУ" (надпись) ===== */
+.taigi-cart-btn-form {
+    display: inline-flex;
+}
+
+.taigi-cart-btn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    padding: 0;
+    transition: color 0.2s ease;
+    text-transform: uppercase;
+}
+
+    .taigi-cart-btn:hover {
+        color: #1a1a1a;
+    }
+
+/* ================================================================ */
+/* ОБЩИЕ СТИЛИ ДЛЯ КНОПКИ ❤ (переиспользуются)                    */
+/* ================================================================ */
+
+/* ---- Базовый стиль для всех кнопок ❤ ---- */
+.wishlist-btn-base {
+    border-radius: 50%;
+    border: 1px solid #e0dedb;
+    background: #fff;
+    color: #ccc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    padding: 0;
+}
+
+.wishlist-btn-base:hover {
+    background: #fff;
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.wishlist-btn-base.active {
+    background: #dc3545;
+    color: #fff;
+    border-color: #dc3545;
+}
+
+.wishlist-btn-base.active:hover {
+    background: #c62828;
+    border-color: #c62828;
+    color: #fff;
+}
+
+/* ---- Кнопка в каталоге (маленькая) ---- */
+.wishlist-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.wishlist-btn-form {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
+/* ---- Кнопка на странице товара (большая) ---- */
+.wishlist-details-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+}
+
+.wishlist-details-form {
+    flex-shrink: 0;
+}
+
+/* ================================================================ */
+/* TAIGI — УВЕДОМЛЕНИЯ (ALERTS)                                    */
+/* ================================================================ */
+
+.taigi-alert {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    margin-top: 55px;
+    border: 1px solid #e8e7e4;
+    background: #f8f7f5;
+    font-size: 14px;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 0;
+}
+
+.taigi-alert-success {
+    border-left: 3px solid #2d7d46;
+    background: #f5f8f6;
+}
+
+    .taigi-alert-success .taigi-alert-icon {
+        color: #2d7d46;
+        font-size: 18px;
+    }
+
+.taigi-alert-info {
+    border-left: 3px solid #1a1a1a;
+    background: #f8f7f5;
+}
+
+    .taigi-alert-info .taigi-alert-icon {
+        color: #1a1a1a;
+        font-size: 18px;
+    }
+
+.taigi-alert-error {
+    border-left: 3px solid #c62828;
+    background: #fbe9e7;
+}
+
+    .taigi-alert-error .taigi-alert-icon {
+        color: #c62828;
+        font-size: 18px;
+    }
+
+.taigi-alert-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #999;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+    .taigi-alert-close:hover {
+        color: #1a1a1a;
+    }
+
+.taigi-alert-text {
+    flex: 1;
+}
+
+    .taigi-alert-text strong {
+        color: #1a1a1a;
+        font-weight: 600;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.catalog-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid #e8e7e4;
+    border-bottom: 1px solid #e8e7e4;
+    margin-bottom: 24px;
+}
+
+.catalog-toolbar-left {
+    display: flex;
+    align-items: center;
+}
+
+.catalog-toolbar-count {
+    font-size: 13px;
+    color: #999;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.catalog-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+/* ===== ПОИСК ===== */
+.catalog-search-form {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e0dedb;
+    background: #f8f7f5;
+    transition: border-color 0.2s;
+}
+
+    .catalog-search-form:focus-within {
+        border-color: #1a1a1a;
+    }
+
+.catalog-search-input {
+    border: none;
+    padding: 6px 12px;
+    font-size: 13px;
+    outline: none;
+    background: #f8f7f5;
+    min-width: 140px;
+    color: #999;
+}
+
+    .catalog-search-input::placeholder {
+        color: #bbb;
+    }
+
+.catalog-search-btn {
+    background: none;
+    border: none;
+    padding: 6px 12px;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+    .catalog-search-btn:hover {
+        color: #1a1a1a;
+    }
+
+/* ===== СОРТИРОВКА ===== */
+.catalog-sort {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.catalog-sort-label {
+    font-size: 12px;
+    color: #999;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.catalog-sort-select {
+    border: 1px solid #e0dedb;
+    padding: 6px 28px 6px 12px;
+    font-size: 13px;
+    color: #999;
+    background: #f8f7f5;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.2s;
+    min-width: 120px;
+}
+
+    .catalog-sort-select:focus {
+        border-color: #1a1a1a;
+    }
+
+/* ===== АДАПТИВ ===== */
+@media (max-width: 768px) {
+    .catalog-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 10px 0;
+    }
+
+    .catalog-toolbar-left,
+    .catalog-toolbar-right {
+        justify-content: center;
+    }
+
+    .catalog-search-input {
+        min-width: 100px;
+        color: #999;
+    }
+
+    .catalog-sort-select {
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 576px) {
+    .catalog-toolbar-right {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .catalog-search-form {
+        width: 100%;
+    }
+
+    .catalog-search-input {
+        flex: 1;
+        color: #999;
+    }
+
+    .catalog-sort {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .catalog-sort-select {
+        flex: 1;
+    }
+}
+
+
+
+
+
+
+
+
+/* ===== КАСТОМНЫЙ CONFIRM (СТИЛЬ TAIGI) ===== */
+#customConfirmModal .modal-content {
+    border-radius: 0;
+    border: 1px solid #1a1a1a;
+    background: #ffffff;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+}
+
+#customConfirmModal .modal-header {
+    padding: 28px 28px 0 28px;
+    border-bottom: none;
+}
+
+#customConfirmModal .modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #1a1a1a;
+}
+
+#customConfirmModal .btn-close {
+    opacity: 1;
+    color: #1a1a1a;
+}
+
+#customConfirmModal .modal-body {
+    padding: 16px 28px 8px 28px;
+}
+
+    #customConfirmModal .modal-body p {
+        font-size: 15px;
+        color: #555;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+#customConfirmModal .modal-footer {
+    padding: 16px 28px 28px 28px;
+    border-top: none;
+    gap: 12px;
+}
+
+#customConfirmModal .btn-outline-dark {
+    border-radius: 0;
+    padding: 10px 32px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-color: #1a1a1a;
+    color: #1a1a1a;
+    background: transparent;
+    transition: all 0.2s;
+}
+
+    #customConfirmModal .btn-outline-dark:hover {
+        background: #f5f4f0;
+        border-color: #1a1a1a;
+    }
+
+#customConfirmModal .btn-dark {
+    border-radius: 0;
+    padding: 10px 32px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    background: #1a1a1a;
+    color: #ffffff;
+    border: 1px solid #1a1a1a;
+    transition: all 0.2s;
+}
+
+    #customConfirmModal .btn-dark:hover {
+        background: #333333;
+        border-color: #333333;
+    }
+
+#customConfirmModal .modal-dialog {
+    max-width: 440px;
+}
+
+/* Затемнение в стиле TAIGI */
+.modal-backdrop.show {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+
+

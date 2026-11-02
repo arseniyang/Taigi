@@ -1,0 +1,233 @@
+﻿@model IEnumerable<Product>
+
+@{
+    ViewData["Title"] = ViewBag.CurrentCategory?.Name ?? "Каталог";
+    var categories = ViewBag.Categories as List<Category> ?? new List<Category>();
+    var currentCategoryId = ViewBag.CurrentCategoryId as int?;
+    var currentCategory = categories.FirstOrDefault(c => c.Id == currentCategoryId);
+    var sortBy = ViewBag.SortBy as string ?? "popular";
+    var totalItems = ViewBag.TotalItems as int? ?? 0;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var currentPage = ViewBag.CurrentPage as int? ?? 1;
+    var searchQuery = ViewBag.SearchQuery as string;
+}
+
+<div class="container py-4">
+    <form id="antiForgeryForm" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+   
+
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted">Главная</a></li>
+            @if (currentCategory != null)
+            {
+                <li class="breadcrumb-item active text-dark fw-semibold">@currentCategory.Name</li>
+            }
+            else
+            {
+                <li class="breadcrumb-item active text-dark fw-semibold">Каталог</li>
+            }
+        </ol>
+    </nav>
+
+    <h1 class="h2 fw-bold mb-3">
+        @if (currentCategory != null)
+        {
+            @currentCategory.Name
+        }
+        else
+        {
+            @:Все товары
+        }
+    </h1>
+
+    <!-- Категории -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a asp-action="Index" class="btn @(!currentCategoryId.HasValue ? "btn-dark" : "btn-outline-secondary") btn-sm rounded-pill px-4">Все</a>
+        @foreach (var cat in categories)
+        {
+            <a asp-action="Index" asp-route-categoryId="@cat.Id" class="btn @(currentCategoryId == cat.Id ? "btn-dark" : "btn-outline-secondary") btn-sm rounded-pill px-4">@cat.Name</a>
+        }
+    </div>
+
+    <!-- Топ-бар -->
+    <div class="catalog-toolbar">
+        <div class="catalog-toolbar-left">
+            <span class="catalog-toolbar-count">Найдено @totalItems товаров</span>
+        </div>
+        <div class="catalog-toolbar-right">
+            <!-- Поиск -->
+<form asp-action="Index" method="get" class="catalog-search-form">
+    <input type="text"
+           name="searchQuery"
+           class="catalog-search-input"
+           placeholder="Поиск..."
+           value="@ViewBag.SearchQuery" />
+    <button type="submit" class="catalog-search-btn">
+        <i class="bi bi-search"></i>
+    </button>
+</form>
+
+            <!-- Сортировка -->
+            <div class="catalog-sort">
+                <span class="catalog-sort-label">Сортировать:</span>
+                <select id="sortSelect" class="catalog-sort-select">
+                    <option value="popular" selected="@(sortBy == "popular")">Популярности</option>
+                    <option value="newest" selected="@(sortBy == "newest")">Новизне</option>
+                    <option value="price_asc" selected="@(sortBy == "price_asc")">Цене ↑</option>
+                    <option value="price_desc" selected="@(sortBy == "price_desc")">Цене ↓</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Сетка товаров -->
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <h3>Товаров не найдено</h3>
+            <p class="text-muted">Попробуйте изменить параметры фильтра.</p>
+            <a asp-action="Index" class="btn btn-dark rounded-pill px-4">Показать все</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var product in Model)
+            {
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="taigi-product-card">
+
+                        <!-- ===== КЛИКАБЕЛЬНОЕ ИЗОБРАЖЕНИЕ ===== -->
+                        <a asp-controller="Catalog" asp-action="Details" asp-route-id="@product.Id" class="taigi-product-image-link">
+                            @if (product.Images.Any())
+                            {
+                                <img src="@product.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl" alt="@product.Name" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="taigi-product-card-noimg">Нет фото</div>
+                            }
+                        </a>
+
+                        <!-- ===== КНОПКА ИЗБРАННОЕ (AJAX) ===== -->
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <div class="wishlist-btn-form">
+                                <button type="button"
+                                        class="wishlist-btn-base wishlist-btn @(ViewBag.WishlistIds != null && ViewBag.WishlistIds.Contains(product.Id) ? "active" : "")"
+                                        data-product-id="@product.Id"
+                                        onclick="toggleWishlist(this)"
+                                        title="В избранное">
+                                    <i class="bi bi-heart"></i>
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="wishlist-btn-form">
+                                <a asp-area="Identity" asp-page="/Account/Login" asp-route-returnUrl="@Context.Request.Path"
+                                   class="wishlist-btn-base wishlist-btn" title="Войдите, чтобы добавить в избранное">
+                                    <i class="bi bi-heart"></i>
+                                </a>
+                            </div>
+                        }
+
+                        <!-- ===== ИНФОРМАЦИЯ ===== -->
+                        <div class="taigi-product-card-body">
+                            <p class="taigi-product-card-name">@product.Name.ToUpper()</p>
+                            <p class="taigi-product-card-price">@product.Price.ToString("N0") ₽</p>
+
+                            @if (product.CreatedAt > DateTime.Now.AddDays(-30))
+                            {
+                                <span class="taigi-product-badge">NEW</span>
+                            }
+
+                            <div class="taigi-product-actions">
+                                <!-- Кнопка "Подробнее" -->
+                                <a asp-controller="Catalog" asp-action="Details" asp-route-id="@product.Id" class="taigi-product-link">
+                                    ПОДРОБНЕЕ
+                                </a>
+
+                                <!-- Кнопка "В корзину" 
+                                <form asp-controller="Cart" asp-action="Add" method="post" class="taigi-cart-btn-form">
+                                    <input type="hidden" name="productId" value="@product.Id" />
+                                    <input type="hidden" name="quantity" value="1" />
+                                    <input type="hidden" name="size" value="OneSize" />
+                                    <button type="submit" class="taigi-cart-btn">
+                                        В КОРЗИНУ
+                                    </button>
+                                </form>-->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Пагинация -->
+    @if (totalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a asp-action="Index" asp-route-categoryId="@currentCategoryId" asp-route-sortBy="@sortBy" asp-route-searchQuery="@searchQuery" asp-route-page="@i" class="page-link">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('sortSelect').addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('sortBy', this.value);
+            window.location.href = url.toString();
+        });
+
+        // ================================================================
+        // AJAX ДЛЯ КНОПКИ ИЗБРАННОЕ
+        // ================================================================
+        function toggleWishlist(btn) {
+            const productId = btn.dataset.productId;
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+            const tokenValue = token ? token.value : '';
+
+            fetch('/Wishlist/Toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': tokenValue
+                },
+                body: JSON.stringify({ productId: parseInt(productId) })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        btn.classList.toggle('active');
+                        showNotification(data.message, 'success');
+                    } else if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        showNotification(data.message || 'Ошибка', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    showNotification('Произошла ошибка', 'error');
+                });
+        }
+
+       
+    </script>
+}

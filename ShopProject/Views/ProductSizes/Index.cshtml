@@ -1,0 +1,556 @@
+﻿@model List<ProductSize>
+
+@{
+    ViewData["Title"] = $"Размеры: {ViewBag.ProductName}";
+    var productId = ViewBag.ProductId;
+    var hasSizes = ViewBag.HasSizes as bool? ?? false;
+}
+
+<div class="container py-4">
+
+    <!-- Хлебные крошки -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Products" asp-action="Index" class="text-decoration-none text-muted">Товары</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Products" asp-action="Edit" asp-route-id="@productId" class="text-decoration-none text-muted">@ViewBag.ProductName</a></li>
+            <li class="breadcrumb-item active text-dark fw-semibold">Размеры</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+        <h2 class="page-title">Размеры: @ViewBag.ProductName</h2>
+        <div class="d-flex gap-2">
+            <a asp-controller="Products" asp-action="Edit" asp-route-id="@productId" class="btn btn-outline-secondary rounded-pill px-4">
+                ← К товару
+            </a>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-dark rounded-pill px-4">
+                ← К списку товаров
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success-custom alert-dismissible fade show" role="alert">
+            <span>@TempData["Success"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger-custom alert-dismissible fade show" role="alert">
+            <span>@TempData["Error"]</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- ===== ПЕРЕКЛЮЧАТЕЛЬ HAS SIZES ===== -->
+    <div class="sizes-toggle-card">
+        <div class="sizes-toggle-info">
+            <span class="sizes-toggle-label">Размеры включены</span>
+            <span class="sizes-toggle-status @(hasSizes ? "status-on" : "status-off")">
+                @(hasSizes ? "Да" : "Нет")
+            </span>
+            <span class="sizes-toggle-hint">Если отключить, товар будет добавляться в корзину без выбора размера</span>
+        </div>
+        <form asp-action="ToggleHasSizes" method="post">
+            <input type="hidden" name="productId" value="@productId" />
+            <button type="submit" class="btn @(hasSizes ? "btn-outline-danger" : "btn-dark") rounded-pill px-4">
+                @(hasSizes ? "Отключить размеры" : "Включить размеры")
+            </button>
+        </form>
+    </div>
+
+    <!-- ===== СПИСОК РАЗМЕРОВ ===== -->
+    <div class="sizes-list-card">
+        <div class="sizes-list-header">
+            <span class="sizes-list-title">Существующие размеры</span>
+            <span class="sizes-list-count">@Model.Count шт.</span>
+        </div>
+        <div class="sizes-list-body">
+            @if (Model.Any())
+            {
+                <div class="sizes-grid">
+                    @foreach (var size in Model.OrderBy(s => s.Size))
+                    {
+                        <div class="size-item @(!size.IsAvailable ? "size-item-inactive" : "")">
+                            <span class="size-name">@size.Size</span>
+
+                            <!-- ===== РЕДАКТИРОВАНИЕ КОЛИЧЕСТВА ===== -->
+                            <form asp-action="UpdateStock" method="post" class="d-inline stock-form">
+                                <input type="hidden" name="sizeId" value="@size.Id" />
+                                <input type="hidden" name="productId" value="@productId" />
+                                <input type="number" name="stockQuantity" value="@size.StockQuantity"
+                                       class="form-control form-control-sm stock-input" min="0" />
+                                <button type="submit" class="btn btn-sm btn-outline-dark rounded-pill stock-btn">Обновить</button>
+                            </form>
+
+                            @if (!size.IsAvailable)
+                            {
+                                <span class="size-status size-status-hidden">скрыт</span>
+                            }
+
+                            <div class="size-actions">
+                                <form asp-action="ToggleAvailability" method="post" class="d-inline">
+                                    <input type="hidden" name="sizeId" value="@size.Id" />
+                                    <input type="hidden" name="productId" value="@productId" />
+                                    <button type="submit" class="btn-size-toggle" title="@(size.IsAvailable ? "Скрыть" : "Показать")">
+                                        @(size.IsAvailable ? "◉" : "◎")
+                                    </button>
+                                </form>
+                                <form asp-action="Delete" method="post" class="d-inline">
+                                    <input type="hidden" name="sizeId" value="@size.Id" />
+                                    <input type="hidden" name="productId" value="@productId" />
+                                    <button type="submit" class="btn-size-delete" title="Удалить" onclick="return confirm('Удалить размер «@size.Size»?');">✕</button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">Размеры не добавлены</p>
+            }
+        </div>
+    </div>
+
+    <!-- ===== ДОБАВЛЕНИЕ НОВОГО РАЗМЕРА ===== -->
+    <div class="sizes-add-card">
+        <div class="sizes-add-header">
+            <span class="sizes-add-title">Добавить размер</span>
+        </div>
+        <div class="sizes-add-body">
+            <form asp-action="Add" method="post">
+                <input type="hidden" name="productId" value="@productId" />
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Размер</label>
+                        <input type="text" name="size" class="form-control" placeholder="Новый размер" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Количество</label>
+                        <input type="number" name="stockQuantity" class="form-control" value="10" min="0" required />
+                    </div>
+                    <div class="col-md-auto">
+                        <button type="submit" class="btn btn-dark rounded-pill px-4">Добавить</button>
+                    </div>
+                </div>
+                <small class="text-muted d-block mt-2">Введите один размер и укажите количество на складе</small>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    /* ================================================================
+           TAIGI — УПРАВЛЕНИЕ РАЗМЕРАМИ
+           ================================================================ */
+
+    .page-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1a1a;
+        letter-spacing: 0.5px;
+        margin: 0;
+    }
+
+    /* ---------- КНОПКИ ---------- */
+    .btn-dark {
+        background-color: #1a1a1a;
+        border: none;
+        font-weight: 500;
+        font-size: 13px;
+        padding: 8px 20px;
+        transition: background 0.2s;
+        border-radius: 50px;
+        color: #fff;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+        .btn-dark:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+    .btn-outline-secondary {
+        border: 1px solid #ddd;
+        color: #999;
+        background: transparent;
+        font-weight: 500;
+        font-size: 13px;
+        padding: 8px 20px;
+        transition: all 0.2s;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+        .btn-outline-secondary:hover {
+            border-color: #1a1a1a;
+            color: #1a1a1a;
+            background: transparent;
+        }
+
+    .btn-outline-danger {
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        background: transparent;
+        font-weight: 500;
+        font-size: 13px;
+        padding: 8px 20px;
+        transition: all 0.2s;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-block;
+        cursor: pointer;
+    }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: #fff;
+        }
+
+    /* ---------- ПЕРЕКЛЮЧАТЕЛЬ ---------- */
+    .sizes-toggle-card {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 20px;
+        background: #f8f7f5;
+        border: 1px solid #e8e7e4;
+        margin-bottom: 24px;
+    }
+
+    .sizes-toggle-info {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 16px;
+    }
+
+    .sizes-toggle-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+
+    .sizes-toggle-status {
+        font-size: 13px;
+        font-weight: 600;
+        padding: 2px 14px;
+        border-radius: 50px;
+    }
+
+        .sizes-toggle-status.status-on {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .sizes-toggle-status.status-off {
+            background: #f5f5f5;
+            color: #999;
+        }
+
+    .sizes-toggle-hint {
+        font-size: 12px;
+        color: #999;
+    }
+
+    /* ---------- СПИСОК РАЗМЕРОВ ---------- */
+    .sizes-list-card {
+        border: 1px solid #e8e7e4;
+        margin-bottom: 24px;
+        background: #fff;
+    }
+
+    .sizes-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: #f8f7f5;
+        border-bottom: 1px solid #e8e7e4;
+    }
+
+    .sizes-list-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+
+    .sizes-list-count {
+        font-size: 13px;
+        color: #999;
+    }
+
+    .sizes-list-body {
+        padding: 16px 20px;
+    }
+
+    .sizes-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .size-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px 6px 14px;
+        border: 1px solid #e8e7e4;
+        background: #fff;
+        font-size: 13px;
+        flex-wrap: wrap;
+    }
+
+    .size-item-inactive {
+        opacity: 0.5;
+        background: #f5f5f5;
+    }
+
+    .size-name {
+        font-weight: 600;
+        color: #1a1a1a;
+        min-width: 24px;
+    }
+
+    /* ---------- КОЛИЧЕСТВО ---------- */
+    .stock-form {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .stock-input {
+        width: 60px;
+        padding: 2px 4px;
+        border: 1px solid #ddd;
+        border-radius: 0;
+        font-size: 12px;
+        text-align: center;
+        background: #fff;
+        transition: border-color 0.2s;
+    }
+
+        .stock-input:focus {
+            border-color: #1a1a1a;
+            outline: none;
+            box-shadow: none;
+        }
+
+    .stock-btn {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 50px;
+        border: 1px solid #ddd;
+        background: #fff;
+        color: #999;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+        .stock-btn:hover {
+            border-color: #1a1a1a;
+            color: #1a1a1a;
+        }
+
+    .size-status {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        padding: 1px 8px;
+        border-radius: 50px;
+    }
+
+    .size-status-hidden {
+        background: #f5f5f5;
+        color: #999;
+    }
+
+    .size-actions {
+        display: flex;
+        gap: 2px;
+        margin-left: 4px;
+    }
+
+    .btn-size-toggle,
+    .btn-size-delete {
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 2px 4px;
+        transition: color 0.2s;
+        line-height: 1;
+    }
+
+        .btn-size-toggle:hover {
+            color: #1a1a1a;
+        }
+
+        .btn-size-delete:hover {
+            color: #dc3545;
+        }
+
+    /* ---------- ДОБАВЛЕНИЕ ---------- */
+    .sizes-add-card {
+        border: 1px solid #e8e7e4;
+        background: #fff;
+    }
+
+    .sizes-add-header {
+        padding: 12px 20px;
+        background: #f8f7f5;
+        border-bottom: 1px solid #e8e7e4;
+    }
+
+    .sizes-add-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+
+    .sizes-add-body {
+        padding: 16px 20px;
+    }
+
+        .sizes-add-body .form-control {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 0;
+            font-size: 14px;
+            background: #fff;
+            transition: border-color 0.2s ease;
+            width: 100%;
+        }
+
+            .sizes-add-body .form-control:focus {
+                border-color: #1a1a1a;
+                outline: none;
+                box-shadow: none;
+            }
+
+        .sizes-add-body .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
+        }
+
+    /* ---------- СООБЩЕНИЯ ---------- */
+    .alert-success-custom,
+    .alert-danger-custom {
+        padding: 12px 20px;
+        border-radius: 0;
+        border: none;
+        font-size: 14px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .alert-success-custom {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .alert-danger-custom {
+        background: #fbe9e7;
+        color: #c62828;
+    }
+
+    /* ===== АДАПТИВ ===== */
+    @@media (max-width: 768px) {
+        .page-title {
+            font-size: 18px;
+        }
+
+        .sizes-toggle-card {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .sizes-toggle-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
+
+        .sizes-add-body .row {
+            flex-direction: column;
+        }
+
+        .sizes-add-body .col-md-auto {
+            width: 100%;
+        }
+
+        .sizes-add-body .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .size-item {
+            font-size: 12px;
+            padding: 4px 8px 4px 10px;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .stock-input {
+            width: 50px;
+            font-size: 11px;
+        }
+
+        .btn-dark,
+        .btn-outline-secondary,
+        .btn-outline-danger {
+            font-size: 12px;
+            padding: 6px 14px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .page-title {
+            font-size: 16px;
+        }
+
+        .sizes-grid {
+            gap: 6px;
+        }
+
+        .size-item {
+            font-size: 11px;
+            flex-wrap: wrap;
+        }
+
+        .sizes-list-body,
+        .sizes-add-body {
+            padding: 12px 16px;
+        }
+
+        .sizes-list-header,
+        .sizes-add-header {
+            padding: 10px 16px;
+        }
+
+        .stock-form {
+            flex-wrap: wrap;
+        }
+
+        .stock-input {
+            width: 50px;
+        }
+    }
+</style>
